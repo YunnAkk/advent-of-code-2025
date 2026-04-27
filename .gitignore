@@ -109,3 +109,5 @@ http-client.private.env.json
 # Own Excludes
 .idea/vcs.xml
 .idea/.gitignore
+# Exclude Puzzle Input
+input.txt
