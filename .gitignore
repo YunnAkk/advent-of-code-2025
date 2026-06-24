@@ -103,6 +103,7 @@ http-client.private.env.json
 # Own Excludes
 .idea/vcs.xml
 .idea/.gitignore
+.idea/inspectionProfiles/
 
 # Exclude Puzzle Input
 input.txt
