@@ -4,6 +4,12 @@ use std::io::{BufRead, BufReader};
 use std::num::ParseIntError;
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::fmt;
+use std::fmt::Formatter;
+
+const UPPER_BOUNDARY: i32 = 99;
+const LOWER_BOUNDARY: i32 = 0;
+const FULL_ROTATION: i32 = UPPER_BOUNDARY - LOWER_BOUNDARY + 1;
 
 #[derive(Debug)]
 struct Instruction {
@@ -12,10 +18,41 @@ struct Instruction {
 }
 
 #[derive(Debug)]
-enum ParseDirectionError {
+pub enum ParseDirectionError {
     Empty,
     InvalidDirection(char),
     InvalidNumber(ParseIntError),
+}
+
+impl fmt::Display for ParseDirectionError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            ParseDirectionError::Empty => write!(f, "Empty instruction"),
+            ParseDirectionError::InvalidDirection(char) => write!(f, "Invalid direction: {char}"),
+            ParseDirectionError::InvalidNumber(num) => write!(f, "invalid number: {num}"),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum DialError {
+    Io(std::io::Error),
+    Parse(usize, ParseDirectionError),
+}
+
+impl fmt::Display for DialError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            DialError::Io(e) => write!(f, "I/O error: {e}"),
+            DialError::Parse(line, e) => write!(f, "Error on line {line}: {e}"),
+        }
+    }
+}
+
+impl From<std::io::Error> for DialError {
+    fn from(value: std::io::Error) -> Self {
+        DialError::Io(value)
+    }
 }
 
 impl FromStr for Instruction {
@@ -42,15 +79,6 @@ impl FromStr for Instruction {
     }
 }
 
-const UPPER_BOUNDARY: i32 = 99;
-const LOWER_BOUNDARY: i32 = 0;
-const FULL_ROTATION: i32 = UPPER_BOUNDARY - LOWER_BOUNDARY + 1;
-
-pub fn test_day01() {
-    let result = read_lines_as_stream(1, 50);
-    println!("{result}");
-}
-
 fn construct_path(day: u8) -> PathBuf {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("inputs");
@@ -59,7 +87,7 @@ fn construct_path(day: u8) -> PathBuf {
     path
 }
 
-pub fn stream_lines(day: u8) -> std::io::Result<impl BufRead> {
+fn stream_lines(day: u8) -> std::io::Result<impl BufRead> {
     let path = construct_path(day);
     let file = File::open(path)?;
     Ok(BufReader::new(file))
@@ -69,25 +97,23 @@ fn normalize_dial_position(pos: i32) -> i32 {
     (pos % FULL_ROTATION + FULL_ROTATION) % FULL_ROTATION
 }
 
-pub fn read_lines_as_stream(day: u8, start_value: i32) -> i32 {
-    let reader = stream_lines(day).unwrap();
+pub fn count_dial_zero_hits(day: u8, start_value: i32) -> Result<i32, DialError> {
+    let reader = stream_lines(day)?;
 
     let mut count = 0;
     let mut curr_dial_pos = start_value;
 
-    // let mut lines: Vec<String> = Vec::new(); Why did we add this?
-    for line in reader.lines() {
-        // let line = line?; // line is akin to the form of "LXX"
-        // println!("{:?}", line);
-        let parsed_line = line.unwrap().parse::<Instruction>();
-        //let parsed_line = match line {
-        //    Ok(line) => line.parse::<Instruction>(),
-        //    Err(e) => return Err(e),
-        //};
+    for (i, line) in reader.lines().enumerate() {
+        let instruction = line?
+            .parse::<Instruction>()
+            .map_err(|e| DialError::Parse(i + 1, e))?;
 
-        let instruction = parsed_line.unwrap();
+        let delta = if instruction.direction == 'R' {
+            instruction.turns
+        } else {
+            -instruction.turns
+        };
 
-        let delta = if instruction.direction == 'R' { instruction.turns } else { -instruction.turns };
         curr_dial_pos = normalize_dial_position(curr_dial_pos + delta);
 
         if (curr_dial_pos == 0) {
@@ -95,6 +121,5 @@ pub fn read_lines_as_stream(day: u8, start_value: i32) -> i32 {
         }
     }
 
-    count
+    Ok(count)
 }
-
