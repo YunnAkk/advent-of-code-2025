@@ -139,8 +139,10 @@ pub fn count_dial_zero_passes(day: u8, start_value: i32) -> Result<i32, DialErro
         };
         curr_dial_pos += delta;
 
-        if prev_dial_pos > LOWER_BOUNDARY && prev_dial_pos < FULL_ROTATION
-            && (curr_dial_pos <= LOWER_BOUNDARY || curr_dial_pos >= FULL_ROTATION) {
+        if prev_dial_pos > LOWER_BOUNDARY
+            && prev_dial_pos < FULL_ROTATION
+            && (curr_dial_pos <= LOWER_BOUNDARY || curr_dial_pos >= FULL_ROTATION)
+        {
             count += 1;
         }
 
