@@ -1,10 +1,10 @@
+use std::fmt;
+use std::fmt::Formatter;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::num::ParseIntError;
 use std::path::PathBuf;
 use std::str::FromStr;
-use std::fmt;
-use std::fmt::Formatter;
 
 const UPPER_BOUNDARY: i32 = 99;
 const LOWER_BOUNDARY: i32 = 0;
@@ -111,6 +111,40 @@ pub fn count_dial_zero_hits(day: u8, start_value: i32) -> Result<i32, DialError>
         if curr_dial_pos == 0 {
             count += 1;
         }
+    }
+
+    Ok(count)
+}
+
+pub fn count_dial_zero_passes(day: u8, start_value: i32) -> Result<i32, DialError> {
+    let reader = buffered_reader(day)?;
+
+    let mut count = 0;
+    let mut curr_dial_pos = start_value;
+
+    for (i, line) in reader.lines().enumerate() {
+        let instruction = line?
+            .parse::<Instruction>()
+            .map_err(|e| DialError::Parse(i + 1, e))?;
+
+        let quotient = instruction.turns / FULL_ROTATION;
+        let remainder = instruction.turns % FULL_ROTATION;
+
+        count += quotient;
+
+        let prev_dial_pos = curr_dial_pos;
+        let delta = match instruction.direction {
+            'R' => remainder,
+            _ => -remainder,
+        };
+        curr_dial_pos += delta;
+
+        if prev_dial_pos > LOWER_BOUNDARY && prev_dial_pos < FULL_ROTATION
+            && (curr_dial_pos <= LOWER_BOUNDARY || curr_dial_pos >= FULL_ROTATION) {
+            count += 1;
+        }
+
+        curr_dial_pos = normalize_dial_position(curr_dial_pos);
     }
 
     Ok(count)
