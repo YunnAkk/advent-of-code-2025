@@ -1,4 +1,3 @@
-use std::ascii::AsciiExt;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::num::ParseIntError;
@@ -10,12 +9,6 @@ use std::fmt::Formatter;
 const UPPER_BOUNDARY: i32 = 99;
 const LOWER_BOUNDARY: i32 = 0;
 const FULL_ROTATION: i32 = UPPER_BOUNDARY - LOWER_BOUNDARY + 1;
-
-#[derive(Debug)]
-struct Instruction {
-    direction: char,
-    turns: i32,
-}
 
 #[derive(Debug)]
 pub enum ParseDirectionError {
@@ -55,23 +48,23 @@ impl From<std::io::Error> for DialError {
     }
 }
 
+#[derive(Debug)]
+struct Instruction {
+    direction: char,
+    turns: i32,
+}
+
 impl FromStr for Instruction {
     type Err = ParseDirectionError;
 
     fn from_str(instruction: &str) -> Result<Self, Self::Err> {
-        let mut chars = instruction.chars();
-
-        // Get the character for the direction
-        let first_char = chars.next().ok_or(ParseDirectionError::Empty)?;
-
-        // Validate direction
-        let direction = match first_char {
-            'L' | 'R' => first_char.to_ascii_uppercase(),
-            other => return Err(ParseDirectionError::InvalidDirection(other)),
+        let direction = match instruction.as_bytes().first() {
+            Some(&b @ (b'L' | b'R')) => b as char,
+            Some(&other) => return Err(ParseDirectionError::InvalidDirection(other as char)),
+            None => return Err(ParseDirectionError::Empty),
         };
 
-        let turns = chars
-            .as_str()
+        let turns = instruction[1..]
             .parse::<i32>()
             .map_err(ParseDirectionError::InvalidNumber)?;
 
@@ -108,16 +101,15 @@ pub fn count_dial_zero_hits(day: u8, start_value: i32) -> Result<i32, DialError>
             .parse::<Instruction>()
             .map_err(|e| DialError::Parse(i + 1, e))?;
 
-        let delta = if instruction.direction == 'R' {
-            instruction.turns
-        } else {
-            -instruction.turns
+        let delta = match instruction.direction {
+            'R' => instruction.turns,
+            _ => -instruction.turns,
         };
 
         curr_dial_pos = normalize_dial_position(curr_dial_pos + delta);
 
-        if (curr_dial_pos == 0) {
-            count+= 1;
+        if curr_dial_pos == 0 {
+            count += 1;
         }
     }
 
