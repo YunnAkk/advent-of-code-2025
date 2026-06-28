@@ -80,7 +80,7 @@ fn construct_path(day: u8) -> PathBuf {
     path
 }
 
-fn stream_lines(day: u8) -> std::io::Result<impl BufRead> {
+fn buffered_reader(day: u8) -> std::io::Result<impl BufRead> {
     let path = construct_path(day);
     let file = File::open(path)?;
     Ok(BufReader::new(file))
@@ -91,7 +91,7 @@ fn normalize_dial_position(pos: i32) -> i32 {
 }
 
 pub fn count_dial_zero_hits(day: u8, start_value: i32) -> Result<i32, DialError> {
-    let reader = stream_lines(day)?;
+    let reader = buffered_reader(day)?;
 
     let mut count = 0;
     let mut curr_dial_pos = start_value;
