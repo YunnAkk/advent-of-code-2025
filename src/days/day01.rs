@@ -20,7 +20,7 @@ pub enum ParseDirectionError {
 impl fmt::Display for ParseDirectionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            ParseDirectionError::Empty => write!(f, "Empty instruction"),
+            ParseDirectionError::Empty => write!(f, "Missing instruction"),
             ParseDirectionError::InvalidDirection(char) => write!(f, "Invalid direction: {char}"),
             ParseDirectionError::InvalidNumber(num) => write!(f, "invalid number: {num}"),
         }
@@ -72,16 +72,7 @@ impl FromStr for Instruction {
     }
 }
 
-fn construct_path(day: u8) -> PathBuf {
-    let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    path.push("inputs");
-    path.push(format!("day{:02}", day));
-    path.push("input.txt");
-    path
-}
-
-fn buffered_reader(day: u8) -> std::io::Result<impl BufRead> {
-    let path = construct_path(day);
+fn buffered_reader(path: &PathBuf) -> std::io::Result<impl BufRead> {
     let file = File::open(path)?;
     Ok(BufReader::new(file))
 }
@@ -90,8 +81,8 @@ fn normalize_dial_position(pos: i32) -> i32 {
     (pos % FULL_ROTATION + FULL_ROTATION) % FULL_ROTATION
 }
 
-pub fn count_dial_zero_hits(day: u8, start_value: i32) -> Result<i32, DialError> {
-    let reader = buffered_reader(day)?;
+pub fn count_dial_zero_hits(path: &PathBuf, start_value: i32) -> Result<i32, DialError> {
+    let reader = buffered_reader(path)?;
 
     let mut count = 0;
     let mut curr_dial_pos = start_value;
@@ -116,8 +107,8 @@ pub fn count_dial_zero_hits(day: u8, start_value: i32) -> Result<i32, DialError>
     Ok(count)
 }
 
-pub fn count_dial_zero_passes(day: u8, start_value: i32) -> Result<i32, DialError> {
-    let reader = buffered_reader(day)?;
+pub fn count_dial_zero_passes(path: &PathBuf, start_value: i32) -> Result<i32, DialError> {
+    let reader = buffered_reader(path)?;
 
     let mut count = 0;
     let mut curr_dial_pos = start_value;
@@ -150,4 +141,150 @@ pub fn count_dial_zero_passes(day: u8, start_value: i32) -> Result<i32, DialErro
     }
 
     Ok(count)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::utils;
+    use super::*;
+
+    fn path_for(name: &str) -> PathBuf {
+        utils::get_path_from_root(&format!("test_inputs/day01/{name}"))
+    }
+
+    mod count_dial_zero_hits {
+        use super::*;
+
+        #[test]
+        fn hits_0_to_99() {
+            assert_eq!(
+                count_dial_zero_hits(&path_for("0-to-99.txt"), 0).unwrap(),
+                1,
+            );
+        }
+
+        #[test]
+        fn hits_1_to_99() {
+            assert_eq!(
+                count_dial_zero_hits(&path_for("1-to-99.txt"), 1).unwrap(),
+                1,
+            );
+        }
+
+        #[test]
+        fn hits_98_to_0() {
+            assert_eq!(
+                count_dial_zero_hits(&path_for("98-to-0.txt"), 98).unwrap(),
+                2,
+            );
+        }
+
+        #[test]
+        fn hits_99_to_0() {
+            assert_eq!(
+                count_dial_zero_hits(&path_for("99-to-0.txt"), 99).unwrap(),
+                2,
+            );
+        }
+
+        #[test]
+        fn hits_aoc_example() {
+            assert_eq!(
+                count_dial_zero_hits(&path_for("aoc_example.txt"), 50).unwrap(),
+                3,
+            );
+        }
+
+        #[test]
+        fn hits_full_rotation_left() {
+            assert_eq!(
+                count_dial_zero_hits(&path_for("full-rotation-left.txt"), 0).unwrap(),
+                1,
+            );
+        }
+
+        #[test]
+        fn hits_full_rotation_right() {
+            assert_eq!(
+                count_dial_zero_hits(&path_for("full-rotation-right.txt"), 0).unwrap(),
+                1,
+            );
+        }
+
+        #[test]
+        fn hits_simple_back_forth() {
+            assert_eq!(
+                count_dial_zero_hits(&path_for("simple-back-forth.txt"), 10).unwrap(),
+                160,
+            );
+        }
+    }
+
+    mod count_dial_zero_passes {
+        use super::*;
+
+        #[test]
+        fn passes_0_to_99() {
+            assert_eq!(
+                count_dial_zero_passes(&path_for("0-to-99.txt"), 0).unwrap(),
+                1,
+            );
+        }
+
+        #[test]
+        fn passes_1_to_99() {
+            assert_eq!(
+                count_dial_zero_passes(&path_for("1-to-99.txt"), 1).unwrap(),
+                2,
+            );
+        }
+
+        #[test]
+        fn passes_98_to_0() {
+            assert_eq!(
+                count_dial_zero_passes(&path_for("98-to-0.txt"), 98).unwrap(),
+                2,
+            );
+        }
+
+        #[test]
+        fn passes_99_to_0() {
+            assert_eq!(
+                count_dial_zero_passes(&path_for("99-to-0.txt"), 99).unwrap(),
+                2,
+            );
+        }
+
+        #[test]
+        fn passes_aoc_example() {
+            assert_eq!(
+                count_dial_zero_passes(&path_for("aoc_example.txt"), 50).unwrap(),
+                6,
+            );
+        }
+
+        #[test]
+        fn passes_full_rotation_left() {
+            assert_eq!(
+                count_dial_zero_passes(&path_for("full-rotation-left.txt"), 2).unwrap(),
+                2,
+            );
+        }
+
+        #[test]
+        fn passes_full_rotation_right() {
+            assert_eq!(
+                count_dial_zero_passes(&path_for("full-rotation-right.txt"), 2).unwrap(),
+                1,
+            );
+        }
+
+        #[test]
+        fn passes_simple_back_forth() {
+            assert_eq!(
+                count_dial_zero_passes(&path_for("simple-back-forth.txt"), 10).unwrap(),
+                160,
+            );
+        }
+    }
 }
