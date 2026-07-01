@@ -46,4 +46,4 @@ The first and second condition (`prev_dial_pos > LOWER_BOUNDARY && prev_dial_pos
 This check can produce at most one additional crossing because, after removing full revolutions, the remainder is strictly less than 100. The dial can wrap around the boundary at most once. For instance, if the dial is at 1 and rotates left by 99 (the maximum possible remainder), the unnormalized position is −98, which normalizes to 2, crossing 0 exactly once. The same logic holds symmetrically for rightward rotations from 99. After performing this check, I normalize the position and proceed to the next instruction. We repeat this for every instruction until we finally find the password.
 
 [Go to Day 2](day02.md)  
-[Go to Day 1 code](../src/days/day01.rs)
+[Go to Day 1 Code](../src/days/day01.rs)
