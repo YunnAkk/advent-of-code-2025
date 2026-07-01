@@ -30,7 +30,7 @@ mod tests {
         use super::*;
 
         #[test]
-        fn happy_path() {
+        fn relative_path_joins_root() {
             let result = get_path_from_root("inputs/day01/input.txt");
 
             let expected = PathBuf::from(format!(
@@ -43,7 +43,7 @@ mod tests {
         }
 
         #[test]
-        fn empty_path() {
+        fn empty_path_returns_root() {
             let result = get_path_from_root("");
 
             let expected = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -53,19 +53,19 @@ mod tests {
 
         #[test]
         fn leading_separator_is_ignored() {
-            let with_leading = get_path_from_root("/etc/passwd");
+            let result = get_path_from_root("/etc/passwd");
 
-            let without = PathBuf::from(format!(
+            let expected = PathBuf::from(format!(
                 "{}{sep}etc{sep}passwd",
                 env!("CARGO_MANIFEST_DIR"),
                 sep = MAIN_SEPARATOR
             ));
 
-            assert_eq!(with_leading, without);
+            assert_eq!(result, expected);
         }
 
         #[test]
-        fn root_only_path() {
+        fn root_separator_returns_root() {
             let result = get_path_from_root("/");
 
             let expected = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -89,14 +89,14 @@ mod tests {
 
         #[test]
         fn cur_dir_is_ignored() {
-            let with_dot = get_path_from_root("./inputs/day01/input.txt");
-            let without_dot = get_path_from_root("/inputs/day01/input.txt");
+            let result = get_path_from_root("./inputs/day01/input.txt");
+            let expected = get_path_from_root("/inputs/day01/input.txt");
 
-            assert_eq!(with_dot, without_dot);
+            assert_eq!(result, expected);
         }
 
         #[test]
-        fn pop_component() {
+        fn trailing_dot_dot_resolves_to_parent() {
             let result = get_path_from_root("inputs/day01/..");
 
             let expected = PathBuf::from(format!(
@@ -109,7 +109,7 @@ mod tests {
         }
 
         #[test]
-        fn pop_outside_parent() {
+        fn parent_traversal_beyond_root_is_clamped() {
             let result = get_path_from_root("../../etc/passwd");
 
             let expected = PathBuf::from(format!(
@@ -123,15 +123,15 @@ mod tests {
 
         #[test]
         fn trailing_separator_is_ignored() {
-            let with_trailing = get_path_from_root("inputs/day01/");
+            let result = get_path_from_root("inputs/day01/");
 
-            let without = PathBuf::from(format!(
+            let expected = PathBuf::from(format!(
                 "{}{sep}inputs{sep}day01",
                 env!("CARGO_MANIFEST_DIR"),
                 sep = MAIN_SEPARATOR
             ));
 
-            assert_eq!(with_trailing, without);
+            assert_eq!(result, expected);
         }
 
         #[test]
