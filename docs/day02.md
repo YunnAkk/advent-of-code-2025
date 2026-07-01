@@ -1,0 +1,6 @@
+# Day 2: In the honeypot
+## Part 1
+TODO
+
+## Problem-solving approach
+My first instinct was to take the input number and split it in half if possible, i.e let's say we have the number `9027`, splitting it in half would give us `90` for the left side and `27` for the right side, then we could compare the raw byte/ASCII value, for each side and if they are equal we have found an invalid id and can do `+=` with a variable defined somewhere to add the current number to what we have so far. then we increment our number i.e `9027` by 1, we get `9028` and start the comparison progress again. While this sounds like it'll work at first i'm not happy about this approach because there are a lot of unnecessary comparisons, let's for example say our range has 10'000 numbers this would mean we have O(n) comparisons with n being the amount of numbers in our range, here it'd be O(10'000). This is especially inefficient because if the current number has an odd length, such as for example the number `10721` we're unable to split it into even halfs, we could either split it with left side being `10` and right side `721` or left side with `107` and right side with `21` either way we don't have matching sides, so we might as well skip all numbers with an odd length.
