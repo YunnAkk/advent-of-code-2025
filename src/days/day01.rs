@@ -10,7 +10,7 @@ const UPPER_BOUNDARY: i32 = 99;
 const LOWER_BOUNDARY: i32 = 0;
 const FULL_ROTATION: i32 = UPPER_BOUNDARY - LOWER_BOUNDARY + 1;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ParseDirectionError {
     Empty,
     InvalidDirection(char),
@@ -156,7 +156,7 @@ mod tests {
         use super::*;
 
         #[test]
-        fn hits_0_to_99() {
+        fn from_0_to_99() {
             assert_eq!(
                 count_dial_zero_hits(&path_for("0-to-99.txt"), 0).unwrap(),
                 1,
@@ -164,7 +164,7 @@ mod tests {
         }
 
         #[test]
-        fn hits_1_to_99() {
+        fn from_1_to_99() {
             assert_eq!(
                 count_dial_zero_hits(&path_for("1-to-99.txt"), 1).unwrap(),
                 1,
@@ -172,7 +172,7 @@ mod tests {
         }
 
         #[test]
-        fn hits_98_to_0() {
+        fn from_98_to_0() {
             assert_eq!(
                 count_dial_zero_hits(&path_for("98-to-0.txt"), 98).unwrap(),
                 2,
@@ -180,7 +180,7 @@ mod tests {
         }
 
         #[test]
-        fn hits_99_to_0() {
+        fn from_99_to_0() {
             assert_eq!(
                 count_dial_zero_hits(&path_for("99-to-0.txt"), 99).unwrap(),
                 2,
@@ -188,7 +188,7 @@ mod tests {
         }
 
         #[test]
-        fn hits_aoc_example() {
+        fn aoc_example() {
             assert_eq!(
                 count_dial_zero_hits(&path_for("aoc_example.txt"), 50).unwrap(),
                 3,
@@ -196,7 +196,7 @@ mod tests {
         }
 
         #[test]
-        fn hits_full_rotation_left() {
+        fn full_rotation_left() {
             assert_eq!(
                 count_dial_zero_hits(&path_for("full-rotation-left.txt"), 0).unwrap(),
                 1,
@@ -204,7 +204,7 @@ mod tests {
         }
 
         #[test]
-        fn hits_full_rotation_right() {
+        fn full_rotation_right() {
             assert_eq!(
                 count_dial_zero_hits(&path_for("full-rotation-right.txt"), 0).unwrap(),
                 1,
@@ -212,7 +212,7 @@ mod tests {
         }
 
         #[test]
-        fn hits_simple_back_forth() {
+        fn simple_back_forth() {
             assert_eq!(
                 count_dial_zero_hits(&path_for("simple-back-forth.txt"), 10).unwrap(),
                 160,
@@ -224,7 +224,7 @@ mod tests {
         use super::*;
 
         #[test]
-        fn passes_0_to_99() {
+        fn from_0_to_99() {
             assert_eq!(
                 count_dial_zero_passes(&path_for("0-to-99.txt"), 0).unwrap(),
                 1,
@@ -232,7 +232,7 @@ mod tests {
         }
 
         #[test]
-        fn passes_1_to_99() {
+        fn from_1_to_99() {
             assert_eq!(
                 count_dial_zero_passes(&path_for("1-to-99.txt"), 1).unwrap(),
                 2,
@@ -240,7 +240,7 @@ mod tests {
         }
 
         #[test]
-        fn passes_98_to_0() {
+        fn from_98_to_0() {
             assert_eq!(
                 count_dial_zero_passes(&path_for("98-to-0.txt"), 98).unwrap(),
                 2,
@@ -248,7 +248,7 @@ mod tests {
         }
 
         #[test]
-        fn passes_99_to_0() {
+        fn from_99_to_0() {
             assert_eq!(
                 count_dial_zero_passes(&path_for("99-to-0.txt"), 99).unwrap(),
                 2,
@@ -256,7 +256,7 @@ mod tests {
         }
 
         #[test]
-        fn passes_aoc_example() {
+        fn aoc_example() {
             assert_eq!(
                 count_dial_zero_passes(&path_for("aoc_example.txt"), 50).unwrap(),
                 6,
@@ -264,7 +264,7 @@ mod tests {
         }
 
         #[test]
-        fn passes_full_rotation_left() {
+        fn full_rotation_left() {
             assert_eq!(
                 count_dial_zero_passes(&path_for("full-rotation-left.txt"), 2).unwrap(),
                 2,
@@ -272,7 +272,7 @@ mod tests {
         }
 
         #[test]
-        fn passes_full_rotation_right() {
+        fn full_rotation_right() {
             assert_eq!(
                 count_dial_zero_passes(&path_for("full-rotation-right.txt"), 2).unwrap(),
                 1,
@@ -280,11 +280,44 @@ mod tests {
         }
 
         #[test]
-        fn passes_simple_back_forth() {
+        fn simple_back_forth() {
             assert_eq!(
                 count_dial_zero_passes(&path_for("simple-back-forth.txt"), 10).unwrap(),
                 160,
             );
+        }
+    }
+
+    mod parse_instruction {
+        use super::*;
+
+        #[test]
+        fn rejects_empty_string() {
+            let result = Instruction::from_str("");
+
+            let e = result.unwrap_err();
+
+            assert_eq!(e, ParseDirectionError::Empty);
+        }
+
+        #[test]
+        fn rejects_unknown_direction() {
+            let result = Instruction::from_str("X10");
+
+            let e = result.unwrap_err();
+
+            assert_eq!(e, ParseDirectionError::InvalidDirection('X'));
+        }
+
+        #[test]
+        fn rejects_non_numeric_turns() {
+            let result = Instruction::from_str("Rnumber");
+
+            let e = result.unwrap_err();
+
+            let expected_error = "number".parse::<i32>().unwrap_err();
+
+            assert_eq!(e, ParseDirectionError::InvalidNumber(expected_error));
         }
     }
 }
