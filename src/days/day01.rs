@@ -1,10 +1,14 @@
+//! Day 1 Dial Module
+//!
+//! This module handles all the dial calculations for the challenge of day 1
+
 use std::fmt;
 use std::fmt::Formatter;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead};
 use std::num::ParseIntError;
 use std::path::PathBuf;
 use std::str::FromStr;
+use crate::days::utils;
 
 const UPPER_BOUNDARY: i32 = 99;
 const LOWER_BOUNDARY: i32 = 0;
@@ -72,17 +76,14 @@ impl FromStr for Instruction {
     }
 }
 
-fn buffered_reader(path: &PathBuf) -> std::io::Result<impl BufRead> {
-    let file = File::open(path)?;
-    Ok(BufReader::new(file))
-}
-
 fn normalize_dial_position(pos: i32) -> i32 {
     (pos % FULL_ROTATION + FULL_ROTATION) % FULL_ROTATION
 }
 
+/// This is the main function for Day 1, Part 1.
+
 pub fn count_dial_zero_hits(path: &PathBuf, start_value: i32) -> Result<i32, DialError> {
-    let reader = buffered_reader(path)?;
+    let reader = utils::buffered_reader(path)?;
 
     let mut count = 0;
     let mut curr_dial_pos = start_value;
@@ -108,7 +109,7 @@ pub fn count_dial_zero_hits(path: &PathBuf, start_value: i32) -> Result<i32, Dia
 }
 
 pub fn count_dial_zero_passes(path: &PathBuf, start_value: i32) -> Result<i32, DialError> {
-    let reader = buffered_reader(path)?;
+    let reader = utils::buffered_reader(path)?;
 
     let mut count = 0;
     let mut curr_dial_pos = start_value;

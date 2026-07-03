@@ -1,3 +1,5 @@
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 use std::path::{Component, Path, PathBuf};
 
 pub fn get_path_from_root(relative_path: &str) -> PathBuf {
@@ -19,6 +21,11 @@ pub fn get_path_from_root(relative_path: &str) -> PathBuf {
     }
 
     path
+}
+
+pub fn buffered_reader(path: &PathBuf) -> std::io::Result<impl BufRead> {
+    let file = File::open(path)?;
+    Ok(BufReader::new(file))
 }
 
 #[cfg(test)]
