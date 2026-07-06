@@ -59,7 +59,7 @@ fn process_chunk(input: &str, results: &mut Vec<i64>) {
     }
 }
 
-pub fn func_day2(path: &PathBuf) {
+pub fn sum_invalid_ids_in_ranges(path: &PathBuf) {
     let mut reader = buffered_reader(path).unwrap();
     let mut results: Vec<i64> = Vec::new();
     let mut leftover: Vec<u8> = Vec::new();
