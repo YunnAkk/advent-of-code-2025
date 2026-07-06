@@ -141,6 +141,12 @@ mod tests {
             let path = get_path_from_root("test_inputs/day02/single_invalid.txt");
             assert_eq!(sum_invalid_ids_in_ranges(&path), 11);
         }
+
+        #[test]
+        fn many_sequences() {
+            let path = get_path_from_root("test_inputs/day02/many_sequences.txt");
+            assert_eq!(sum_invalid_ids_in_ranges(&path), 24416684186);
+        }
     }
 
     mod invalid_ids_repeated_sequence {
