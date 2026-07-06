@@ -58,7 +58,7 @@ fn process_chunk(ranges_str: &str, invalid_ids: &mut Vec<i64>) {
     }
 }
 
-pub fn sum_invalid_ids_in_ranges(path: &PathBuf) {
+pub fn sum_invalid_ids_in_ranges(path: &PathBuf) -> i64 {
     let mut reader = buffered_reader(path).unwrap();
     let mut invalid_ids: Vec<i64> = Vec::new();
     let mut pending_bytes: Vec<u8> = Vec::new();
@@ -95,5 +95,56 @@ pub fn sum_invalid_ids_in_ranges(path: &PathBuf) {
         }
     }
 
-    let total: i64 = invalid_ids.iter().sum();
+    invalid_ids.iter().sum()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::days::utils::get_path_from_root;
+
+    mod invalid_ids_single_sequence {
+        use super::*;
+
+        #[test]
+        fn aoc_example() {
+            let path = get_path_from_root("test_inputs/day02/aoc_example.txt");
+            assert_eq!(sum_invalid_ids_in_ranges(&path), 1227775554);
+        }
+
+        #[test]
+        fn left_equal_right() {
+            let path = get_path_from_root("test_inputs/day02/left_equal_right.txt");
+            assert_eq!(sum_invalid_ids_in_ranges(&path), 48985);
+        }
+
+        #[test]
+        fn left_greater() {
+            let path = get_path_from_root("test_inputs/day02/left_greater_right.txt");
+            assert_eq!(sum_invalid_ids_in_ranges(&path), 4444);
+        }
+
+        #[test]
+        fn left_lesser() {
+            let path = get_path_from_root("test_inputs/day02/left_less_right.txt");
+            assert_eq!(sum_invalid_ids_in_ranges(&path), 2222);
+        }
+
+        #[test]
+        fn no_invalid() {
+            let path = get_path_from_root("test_inputs/day02/no_invalid.txt");
+            assert_eq!(sum_invalid_ids_in_ranges(&path), 0);
+        }
+
+        #[test]
+        fn single_invalid() {
+            let path = get_path_from_root("test_inputs/day02/single_invalid.txt");
+            assert_eq!(sum_invalid_ids_in_ranges(&path), 11);
+        }
+    }
+
+    mod invalid_ids_repeated_sequence {
+
+    }
+
 }
