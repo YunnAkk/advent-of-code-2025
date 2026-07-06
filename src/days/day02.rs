@@ -2,58 +2,57 @@ use crate::days::utils::buffered_reader;
 use std::io::BufRead;
 use std::path::PathBuf;
 
-fn process_chunk(input: &str, results: &mut Vec<i64>) {
-    let ranges = input.split(',');
+fn process_chunk(ranges_str: &str, invalid_ids: &mut Vec<i64>) {
+    let ranges = ranges_str.split(',');
 
     for range in ranges {
         if range.is_empty() {
             continue;
         }
 
-        let mut parts = range.split('-');
+        let mut bounds = range.split('-');
 
         // TODO: remove unwrap
-        let start_num_view = parts.next().unwrap();
-        let end_num_view = parts.next().unwrap();
-        let mut current_num_view = String::from(start_num_view);
-        let mut current_num = current_num_view.parse::<i64>().unwrap();
-        let end_num = end_num_view.parse::<i64>().unwrap();
+        let start_str = bounds.next().unwrap();
+        let end_str = bounds.next().unwrap();
+        let mut current_str = String::from(start_str);
+        let mut current_num = current_str.parse::<i64>().unwrap();
+        let end_num = end_str.parse::<i64>().unwrap();
 
         while current_num <= end_num {
-            let current_num_len = current_num_view.len();
+            let num_digits = current_str.len();
 
-            if (current_num_len % 2) == 0 {
-                let mid = current_num_len / 2;
-                let left_view = &current_num_view[..mid];
-                let right_view = &current_num_view[mid..];
+            if (num_digits % 2) == 0 {
+                let half_len = num_digits / 2;
+                let left_half_str = &current_str[..half_len];
+                let right_half_str = &current_str[half_len..];
 
-                let left_num = left_view.parse::<i64>().unwrap();
-                let right_num = right_view.parse::<i64>().unwrap();
-                let base = 10_i64.pow(mid as u32);
+                let left_half = left_half_str.parse::<i64>().unwrap();
+                let right_half = right_half_str.parse::<i64>().unwrap();
+                let half_base = 10_i64.pow(half_len as u32);
 
-                if left_num > right_num {
-                    let diff = left_num - right_num;
-                    current_num += diff;
-                    current_num_view = current_num.to_string();
+                if left_half > right_half {
+                    let excess = left_half - right_half;
+                    current_num += excess;
+                    current_str = current_num.to_string();
                     continue;
-                } else if left_num == right_num {
-                    results.push(current_num);
-                    current_num += base;
-                    current_num_view = current_num.to_string();
+                } else if left_half == right_half {
+                    invalid_ids.push(current_num);
+                    current_num += half_base;
+                    current_str = current_num.to_string();
                     continue;
-                } else if left_num < right_num {
-                    let left_num_carry = left_num + 1;
-                    let diff = base - right_num;
-                    current_num += diff;
-                    current_num += left_num_carry;
-                    current_num_view = current_num.to_string();
+                } else if left_half < right_half {
+                    let next_left_half = left_half + 1;
+                    let right_deficit = half_base - right_half;
+                    current_num += right_deficit + next_left_half;
+                    current_str = current_num.to_string();
                     continue;
                 }
             } else {
-                let shift_base = 10_i64.pow(current_num_len as u32);
-                let diff = shift_base - current_num;
-                current_num += diff;
-                current_num_view = current_num.to_string();
+                let next_pow10 = 10_i64.pow(num_digits as u32);
+                let pow10_deficit = next_pow10 - current_num;
+                current_num += pow10_deficit;
+                current_str = current_num.to_string();
             }
         }
     }
@@ -61,42 +60,40 @@ fn process_chunk(input: &str, results: &mut Vec<i64>) {
 
 pub fn sum_invalid_ids_in_ranges(path: &PathBuf) {
     let mut reader = buffered_reader(path).unwrap();
-    let mut results: Vec<i64> = Vec::new();
-    let mut leftover: Vec<u8> = Vec::new();
+    let mut invalid_ids: Vec<i64> = Vec::new();
+    let mut pending_bytes: Vec<u8> = Vec::new();
 
     loop {
         let buffer = reader.fill_buf().unwrap();
 
         if buffer.is_empty() {
-            if !leftover.is_empty() {
-                let chunk = std::str::from_utf8(&leftover).unwrap();
-                process_chunk(chunk, &mut results);
+            if !pending_bytes.is_empty() {
+                let chunk = std::str::from_utf8(&pending_bytes).unwrap();
+                process_chunk(chunk, &mut invalid_ids);
             }
             break;
         }
 
         match buffer.iter().rposition(|&b| b == b',') {
             Some(last_comma_idx) => {
-                if leftover.is_empty() {
+                if pending_bytes.is_empty() {
                     let chunk = std::str::from_utf8(&buffer[..=last_comma_idx]).unwrap();
-                    process_chunk(chunk, &mut results);
+                    process_chunk(chunk, &mut invalid_ids);
                 } else {
-                    leftover.extend_from_slice(&buffer[..=last_comma_idx]);
-                    let chunk = std::str::from_utf8(&leftover).unwrap();
-                    process_chunk(chunk, &mut results);
-                    leftover.clear();
+                    pending_bytes.extend_from_slice(&buffer[..=last_comma_idx]);
+                    let chunk = std::str::from_utf8(&pending_bytes).unwrap();
+                    process_chunk(chunk, &mut invalid_ids);
+                    pending_bytes.clear();
                 }
                 reader.consume(last_comma_idx + 1);
             }
             None => {
-                leftover.extend_from_slice(buffer);
+                pending_bytes.extend_from_slice(buffer);
                 let consumed = buffer.len();
                 reader.consume(consumed);
             }
         }
     }
 
-    println!("{:?}", results);
-    let final_res: i64 = results.iter().sum();
-    println!("{final_res}");
+    let total: i64 = invalid_ids.iter().sum();
 }
