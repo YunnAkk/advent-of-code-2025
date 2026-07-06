@@ -2,10 +2,10 @@ mod days;
 
 fn main() {
     let day01_path = days::utils::get_path_from_root("inputs/day01/input.txt");
-    let day02_path = days::utils::get_path_from_root("test_inputs/day02/aoc_example.txt");
+    let day02_path = days::utils::get_path_from_root("inputs/day02/input.txt");
 
-    let day01_part1 = days::day01::count_dial_zero_hits(&day01_path, 50);
-    let day01_part2 = days::day01::count_dial_zero_passes(&day01_path, 50);
+    let day01_part1 = days::day01::count_dial_zero_hits(&day01_path, 50).unwrap();
+    let day01_part2 = days::day01::count_dial_zero_passes(&day01_path, 50).unwrap();
     println!("==========================================");
     println!("Result for Day 1 Part 1: {:?}", day01_part1);
     println!("Result for Day 1 Part 1: {:?}", day01_part2);
