@@ -84,8 +84,10 @@ fn process_chunk(input: &str, results: &mut Vec<i64>) {
                     current_num_view = current_num.to_string();
                     continue;
                 } else if left_num < right_num {
-                    let diff = right_num - left_num;
-                    current_num += diff * base;
+                    let left_num_carry = left_num + 1;
+                    let diff = base - right_num;
+                    current_num += diff;
+                    current_num += left_num_carry;
                     current_num_view = current_num.to_string();
                     continue;
                 }
