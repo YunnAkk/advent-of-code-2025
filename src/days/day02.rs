@@ -2,48 +2,6 @@ use crate::days::utils::buffered_reader;
 use std::io::BufRead;
 use std::path::PathBuf;
 
-pub fn func_day2(path: &PathBuf) {
-    let mut reader = buffered_reader(path).unwrap();
-    let mut results: Vec<i64> = Vec::new();
-    let mut leftover: Vec<u8> = Vec::new();
-
-    loop {
-        let buffer = reader.fill_buf().unwrap();
-
-        if buffer.is_empty() {
-            if !leftover.is_empty() {
-                let chunk = std::str::from_utf8(&leftover).unwrap();
-                process_chunk(chunk, &mut results);
-            }
-            break;
-        }
-
-        match buffer.iter().rposition(|&b| b == b',') {
-            Some(last_comma_idx) => {
-                if leftover.is_empty() {
-                    let chunk = std::str::from_utf8(&buffer[..=last_comma_idx]).unwrap();
-                    process_chunk(chunk, &mut results);
-                } else {
-                    leftover.extend_from_slice(&buffer[..=last_comma_idx]);
-                    let chunk = std::str::from_utf8(&leftover).unwrap();
-                    process_chunk(chunk, &mut results);
-                    leftover.clear();
-                }
-                reader.consume(last_comma_idx + 1);
-            }
-            None => {
-                leftover.extend_from_slice(buffer);
-                let consumed = buffer.len();
-                reader.consume(consumed);
-            }
-        }
-    }
-
-    println!("{:?}", results);
-    let final_res: i64 = results.iter().sum();
-    println!("{final_res}");
-}
-
 fn process_chunk(input: &str, results: &mut Vec<i64>) {
     let ranges = input.split(',');
 
@@ -99,4 +57,46 @@ fn process_chunk(input: &str, results: &mut Vec<i64>) {
             }
         }
     }
+}
+
+pub fn func_day2(path: &PathBuf) {
+    let mut reader = buffered_reader(path).unwrap();
+    let mut results: Vec<i64> = Vec::new();
+    let mut leftover: Vec<u8> = Vec::new();
+
+    loop {
+        let buffer = reader.fill_buf().unwrap();
+
+        if buffer.is_empty() {
+            if !leftover.is_empty() {
+                let chunk = std::str::from_utf8(&leftover).unwrap();
+                process_chunk(chunk, &mut results);
+            }
+            break;
+        }
+
+        match buffer.iter().rposition(|&b| b == b',') {
+            Some(last_comma_idx) => {
+                if leftover.is_empty() {
+                    let chunk = std::str::from_utf8(&buffer[..=last_comma_idx]).unwrap();
+                    process_chunk(chunk, &mut results);
+                } else {
+                    leftover.extend_from_slice(&buffer[..=last_comma_idx]);
+                    let chunk = std::str::from_utf8(&leftover).unwrap();
+                    process_chunk(chunk, &mut results);
+                    leftover.clear();
+                }
+                reader.consume(last_comma_idx + 1);
+            }
+            None => {
+                leftover.extend_from_slice(buffer);
+                let consumed = buffer.len();
+                reader.consume(consumed);
+            }
+        }
+    }
+
+    println!("{:?}", results);
+    let final_res: i64 = results.iter().sum();
+    println!("{final_res}");
 }
