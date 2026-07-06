@@ -2,79 +2,96 @@ use crate::days::utils::buffered_reader;
 use std::io::BufRead;
 use std::path::PathBuf;
 
-fn process_chunk(ranges_str: &str, invalid_ids_sum: &mut i64) {
-    // TODO: remove unwrap
-    for range in ranges_str.split(',') {
-        if range.is_empty() {
+fn parse_range(bytes: &[u8]) -> Option<(&[u8], &[u8])> {
+    if let Some(hyphen_idx) = bytes.iter().position(|&b| b == b'-') {
+        let start_bytes = &bytes[..hyphen_idx];
+        let end_bytes = &bytes[(hyphen_idx + 1)..];
+
+        Some((start_bytes, end_bytes))
+    } else {
+        None
+    }
+}
+
+fn parse_int(bytes: &[u8]) -> Option<i64> {
+    let mut val: i64 = 0;
+    let mut has_digits = false;
+
+    for &b in bytes {
+        if b.is_ascii_digit() {
+            val = val * 10 + (b - b'0') as i64;
+            has_digits = true;
+        } else if b.is_ascii_whitespace() {
             continue;
-        }
-
-        let mut bounds = range.split('-');
-        let start_str = bounds.next().unwrap();
-        let end_str = bounds.next().unwrap();
-        let mut current_num = start_str.parse::<i64>().unwrap();
-        let end_num = end_str.parse::<i64>().unwrap();
-
-        while current_num <= end_num {
-            let num_digits = current_num.ilog10() + 1;
-
-            if (num_digits % 2) == 0 {
-                let half_len = num_digits / 2;
-                let half_base = 10_i64.pow(half_len);
-                let left_half = current_num / half_base;
-                let right_half = current_num % half_base;
-
-                if left_half > right_half {
-                    current_num += left_half - right_half;
-                } else if left_half == right_half {
-                    *invalid_ids_sum += current_num;
-                    current_num += half_base;
-                } else if left_half < right_half {
-                    let next_left_half = left_half + 1;
-                    let right_deficit = half_base - right_half;
-                    current_num += right_deficit + next_left_half;
-                }
-            } else {
-                let next_pow10 = 10_i64.pow(num_digits);
-                current_num = next_pow10;
-            }
+        } else {
+            return None;
         }
     }
+    if has_digits { Some(val) } else { None }
+}
+
+fn sum_invalid_in_range(start: i64, end: i64) -> i64 {
+    let mut total_sum = 0;
+    let mut current_num = start;
+
+    while current_num <= end {
+        let num_digits = match current_num.checked_ilog10() {
+            Some(log) => log + 1,
+            None if current_num == 0 => 1,
+            _ => panic!("Negative number error"),
+        };
+
+        if num_digits >= 19 {
+            panic!("The number in the given range does not fit in an i64");
+        }
+
+        if (num_digits % 2) == 0 {
+            let half_len = num_digits / 2;
+            let half_base = 10_i64.pow(half_len);
+            let left_half = current_num / half_base;
+            let right_half = current_num % half_base;
+
+            if left_half > right_half {
+                current_num += left_half - right_half;
+            } else if left_half == right_half {
+                total_sum += current_num;
+                current_num += half_base + 1;
+            } else if left_half < right_half {
+                let next_left_half = left_half + 1;
+                let right_deficit = half_base - right_half;
+                current_num += right_deficit + next_left_half;
+            }
+        } else {
+            let next_pow10 = 10_i64.pow(num_digits);
+            current_num = next_pow10;
+        }
+    }
+
+    total_sum
 }
 
 pub fn sum_invalid_ids_in_ranges(path: &PathBuf) -> i64 {
     let mut reader = buffered_reader(path).unwrap();
+    let mut buffer = Vec::new();
     let mut invalid_ids_sum: i64 = 0;
-    let mut pending_bytes: Vec<u8> = Vec::new();
 
     loop {
-        let buffer = reader.fill_buf().unwrap();
+        buffer.clear();
+        let bytes_read = reader.read_until(b',', &mut buffer).unwrap();
 
-        if buffer.is_empty() {
-            if !pending_bytes.is_empty() {
-                let chunk = std::str::from_utf8(&pending_bytes).unwrap();
-                process_chunk(chunk, &mut invalid_ids_sum);
-            }
+        if bytes_read == 0 {
             break;
         }
 
-        match buffer.iter().rposition(|&b| b == b',') {
-            Some(last_comma_idx) => {
-                if pending_bytes.is_empty() {
-                    let chunk = std::str::from_utf8(&buffer[..=last_comma_idx]).unwrap();
-                    process_chunk(chunk, &mut invalid_ids_sum);
-                } else {
-                    pending_bytes.extend_from_slice(&buffer[..=last_comma_idx]);
-                    let chunk = std::str::from_utf8(&pending_bytes).unwrap();
-                    process_chunk(chunk, &mut invalid_ids_sum);
-                    pending_bytes.clear();
-                }
-                reader.consume(last_comma_idx + 1);
-            }
-            None => {
-                pending_bytes.extend_from_slice(buffer);
-                let consumed = buffer.len();
-                reader.consume(consumed);
+        let mut slice = &buffer[..];
+
+        if slice.ends_with(&[b',']) {
+            slice = &slice[..(slice.len() - 1)];
+        }
+
+        if let Some((start_bytes, end_bytes)) = parse_range(slice) {
+            if let (Some(start), Some(end)) = (parse_int(start_bytes), parse_int(end_bytes)) {
+                invalid_ids_sum += sum_invalid_in_range(start, end);
             }
         }
     }
@@ -133,8 +150,5 @@ mod tests {
         }
     }
 
-    mod invalid_ids_repeated_sequence {
-
-    }
-
+    mod invalid_ids_repeated_sequence {}
 }
