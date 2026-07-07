@@ -14,7 +14,7 @@ Let us now examine the even length case in detail. Consider the range $4810$–$
 ### Case 1: Left $>$ Right
 Let our current number be $4810$, we compute the difference $\text{left} - \text{right} = 48 - 10 = 38$. Adding this to the current number yields $4810 + 38 = 4848$, at which point the two halves are equal and we have located an invalid ID. Implementation:
 
-```
+```rust
 if left_half > right_half {
     current_num += left_half - right_half;
 }
@@ -43,7 +43,7 @@ To illustrate, representing $4848$ in base $10$ with index $n = 3$ gives the exp
 
 This structure is exploited to skip directly from $4848$ to the next invalid id of $4949$, without checking every value in between. Consider only the left half of the number, $48$, which corresponds to $4800$ when the right half is zeroed out. Incrementing the left half by one amounts to adding $10^{n/2} \quad \text{where } n = \text{length of the full number}$, to the full number. With $n = 4$ digits, this is $10^{4/2} = 10^2 = 100$. Adding $100$ to $4848$ yields $4948$. A further addition of $1$ forces the right half to match the incremented left half, producing $4949$. In a single arithmetic step, we bypass every valid ID in between. Implementation:
 
-```
+```rust
 else if left_half == right_half {
     total_sum += current_num;
     current_num += half_base + 1;
@@ -55,7 +55,7 @@ Consider $4870$, where the left half is $48$ and the right half is $70$. Since $
 
 To reach this next range, the right half must increment until it reaches $b^{n/2}$, the half-base of $100$. This is precisely the carry threshold established by the positional notation constraint. A half consisting of $n/2$ digits rolls over to $0$ and increments its neighbor when it reaches $b^{n/2}$. The remaining distance before this carry occurs is the right half's deficit from the base $\text{right\_deficit} = \text{half\_base} - \text{right\_half} = 100 - 70 = 30$. Adding this deficit to the current number triggers the carry $4870 + 30 = 4900$, where the left half is now $49$. The final step is to place the new left half into the right half position, which is a simple addition $4900 + 49 = 4949$. This yields the next invalid ID. Implementation:
 
-```
+```rust
 else if left_half < right_half {
     let next_left_half = left_half + 1;
     let right_deficit = half_base - right_half;
@@ -66,7 +66,7 @@ else if left_half < right_half {
 ### Handling Odd-Length Ranges
 Observe that in both the $\text{left} > \text{right}$ and $\text{left} < \text{right}$ cases, the number is adjusted to land on an invalid ID. Only in the equality branch is it added to the sum and then advanced, this is done to avoid summing the same ID twice. This loop continues until the number reaches an odd digit count. For example, $10000$ which has five digits. Since no odd length number can be an invalid ID, we skip directly to the next even length range. The number $10000$ has a digit length of $5$, the next range of invalid IDs begins at $100000$, which is $10^5$. Expressed in positional notation, $100000 = 1 \cdot 10^5 + 0 \cdot 10^4 + 0 \cdot 10^3 + 0 \cdot 10^2 + 0 \cdot 10^1 + 0 \cdot 10^0$ and the exponent of the leading term matches the current digit length. More generally, if the current digit length is $k$ (odd), we assign $10^k$ to the current number, jumping to the start of the next even-length range. Implementation:
 
-```
+```rust
 else {
     let next_pow10 = 10_i64.pow(num_digits);
     current_num = next_pow10;

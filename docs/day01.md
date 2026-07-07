@@ -33,7 +33,7 @@ Full revolutions: Every complete revolution of 100 clicks crosses 0 exactly once
 
 Remainder: After accounting for full revolutions, the remaining clicks (`instruction.turns % FULL_ROTATION`) might cause one additional crossing. To detect this, I compare the dial's position before and after applying the remainder and crucially, before normalization:
 
-```
+```rust
 if prev_dial_pos > LOWER_BOUNDARY && prev_dial_pos < FULL_ROTATION
 	&& (curr_dial_pos <= LOWER_BOUNDARY || curr_dial_pos >= FULL_ROTATION)
 	{
