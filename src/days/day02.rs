@@ -104,6 +104,127 @@ mod tests {
     use super::*;
     use crate::days::utils::get_path_from_root;
 
+    mod parse {
+        use super::*;
+        mod range {
+            use super::*;
+
+            #[test]
+            fn basic_range() {
+                assert_eq!(parse_range(b"1872-2931"), Some((&b"1872"[..], &b"2931"[..])));
+            }
+
+            #[test]
+            fn leading_zeros() {
+                assert_eq!(parse_range(b"001-050"), Some((&b"001"[..], &b"050"[..])));
+            }
+
+            #[test]
+            fn non_digit_chars() {
+                assert_eq!(
+                    parse_range(b"abc-def"),
+                    Some((&b"abc"[..], &b"def"[..]))
+                );
+            }
+
+            #[test]
+            fn empty_input() {
+                assert_eq!(parse_range(b""), None);
+            }
+
+            #[test]
+            fn single_number_no_hyphen() {
+                assert_eq!(parse_range(b"42"), None);
+            }
+
+            #[test]
+            fn whitespace_only_no_hyphen() {
+                assert_eq!(parse_range(b"   "), None);
+            }
+
+            #[test]
+            fn en_dash_is_not_ascii_hyphen() {
+                // U+2013 en dash, not ASCII 0x2D
+                let input: &[u8] = "10\u{2013}20".as_bytes();
+                assert_eq!(parse_range(input), None);
+            }
+
+            #[test]
+            fn em_dash_is_not_ascii_hyphen() {
+                // U+2014 em dash, not ASCII 0x2D
+                let input: &[u8] = "10\u{2014}20".as_bytes();
+                assert_eq!(parse_range(input), None);
+            }
+
+
+
+        }
+
+        mod int {
+            use super::*;
+
+            #[test]
+            fn single_digits() {
+                for digit in 0..9u8 {
+                    let input = &[b'0' + digit];
+                    let expected = digit as i64;
+                    assert_eq!(
+                        parse_int(input),
+                        Some(expected),
+                        "parse_int({:?}) should return Some({})",
+                        input,
+                        expected,
+                    )
+                }
+            }
+
+            #[test]
+            fn multi_digit() {
+                assert_eq!(parse_int(b"123456789"), Some(123456789));
+            }
+
+            #[test]
+            fn leading_zeros() {
+                assert_eq!(parse_int(b"0042"), Some(42));
+            }
+
+            #[test]
+            fn leading_whitespace() {
+                assert_eq!(parse_int(b" 99"), Some(99));
+            }
+
+            #[test]
+            fn trailing_whitespace() {
+                assert_eq!(parse_int(b"99 "), Some(99));
+            }
+
+            #[test]
+            fn whitespace_between_digits() {
+                assert_eq!(parse_int(b"1 2 3"), Some(123));
+            }
+
+            #[test]
+            fn i64_max() {
+                assert_eq!(parse_int(b"9223372036854775807"), Some(9223372036854775807));
+            }
+
+            #[test]
+            fn invalid_sequence_returns_none() {
+                assert_eq!(parse_int(b"abc"), None);
+            }
+
+            #[test]
+            fn empty_slice_returns_none() {
+                assert_eq!(parse_int(b""), None);
+            }
+
+            #[test]
+            fn whitespace_only_returns_none() {
+                assert_eq!(parse_int(b"   "), None);
+            }
+        }
+    }
+
     mod invalid_ids_single_sequence {
         use super::*;
 
