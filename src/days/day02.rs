@@ -107,44 +107,132 @@ fn separate_num_to_digits(mut num: i64, digits: &mut Vec<i64>) {
     digits.reverse();
 }
 
-fn is_invalid_repeated(digits: &[i64]) -> bool {
-    let len = digits.len();
+fn get_number_length(num: i64) -> i64 {
+    match num.checked_ilog10() {
+        Some(log) => (log + 1) as i64,
+        None if num == 0 => 1 as i64,
+        _ => panic!("Negative number error"),
+    }
+}
 
-    for pattern_len in 1..=(len / 2) {
-        if len % pattern_len != 0 {
+fn is_primitive_pattern(pattern: i64, pattern_len: u32) -> bool {
+    let mut digits: Vec<i64> = Vec::new();
+    separate_num_to_digits(pattern, &mut digits);
+
+    for sub_period in 1..pattern_len {
+        if pattern_len % sub_period != 0 {
             continue;
         }
 
-        let mut matches = true;
+        let sub_period = sub_period as usize;
 
-        for i in 0..len {
-            if digits[i] != digits[i % pattern_len] {
-                matches = false;
+        let mut is_periodic = true;
+        for i in 0..digits.len() {
+            if digits[i] != digits[i % sub_period] {
+                is_periodic = false;
                 break;
             }
         }
 
-        if matches {
-            return true;
+        if is_periodic {
+            return false;
         }
     }
-
-    false
+    true
 }
 
 fn sum_repeating_invalid_id_in_range(start: i64, end: i64) -> i64 {
     let mut total_sum = 0;
-    let mut current_num = start;
 
-    while current_num <= end {
-        let mut digits: Vec<i64> = Vec::new();
-        separate_num_to_digits(current_num, &mut digits);
+    let start_len = get_number_length(start) as u32;
+    let end_len = get_number_length(end) as u32;
 
-        if is_invalid_repeated(&digits) {
-            total_sum += current_num;
+    if end_len >= 19 {
+        panic!("The number in the given range does not fit in an i64");
+    }
+
+    // l = number of digits in the IDs we're generating this iteration.
+    for l in start_len..=end_len {
+        // r_n represents the r^n in the geometric series formula S_n = a(r^n - 1)/(r - 1),
+        // and numerator represents r^n - 1 which is the largest L-digit number.
+        let r_n = 10_i64.pow(l);
+        let numerator = r_n - 1;
+
+        // p = length of one repetition of the pattern (the "block").
+        // Two constraints on P:
+        // - P must divide L evenly, so the pattern tiles the ID with no leftover.
+        // - "repeated at least twice" means k = L / P >= 2, or rather P <= L / 2.
+        for p in 1..=(l / 2) {
+            if l % p != 0 {
+                continue;
+            }
+
+            // block represents r in the denominator from the geometric series formula.
+            // The repunit_multiplier represents the multiplier to extend a number/pattern.
+            // Every invalid ID of length L with pattern length P factors as
+            // num = pattern * repunit_multiplier, where repunit_multiplier is the sum of
+            // a geometric series with ratio r = 10^P and k = L/P terms.
+            //
+            // repunit_multiplier = 1 + 10^P + 10^(2P) + ... + 10^((k-1)P)
+            //
+            // A geometric series  1 + r + r^2 + ... + r^(n-1)  sums to (r^n - 1)/(r - 1).
+            // Substituting r = 10^P and n = k, where k = terms = L/P:
+            //
+            // repunit_multiplier
+            // = ((10^P)^k - 1) / (10^P - 1)
+            // = (10^(kP) - 1) / (10^P - 1)
+            // = (10^L - 1) / (10^P - 1)
+            //
+            // This equals the closed form sum of a geometric series.
+            let block = 10_i64.pow(p);
+            let repunit_multiplier = numerator / (block - 1);
+
+            // Valid range of P digit patterns, from the smallest P digit
+            // number up to block - 1, the largest P digit number
+            let pattern_min = 10_i64.pow(p - 1);
+            let pattern_max = block - 1;
+
+            // Narrow the pattern range down to only those patterns whose resulting
+            // repeated number (pattern * repunit_multiplier) actually falls within [start, end].
+            // For the lower bound we want the smallest pattern whose product is >= start.
+            // That is the smallest pattern satisfying p * M >= start, or rather p >= start / M.
+            // where M is repunit_multiplier and p the pattern.
+            // Since integer division truncates down, plain `start / M` could give a pattern
+            // that's too small (p * M < start), so we round up instead via the
+            // (start + M - 1) / M trick, adding M - 1 pushes any remainder over to the
+            // next integer without affecting values that already divide evenly.
+            // For the upper bound we want the largest pattern whose product is <= end.
+            // That is the largest p satisfying  p * M <= end, or rather p <= end / M.
+            // Here plain integer division is exactly what we want, `end / M` truncates
+            // down, giving the largest p such that p * M <= end. No rounding trick
+            // needed, since truncation and round down to satisfy <= are the same thing.
+            let valid_min = std::cmp::max(
+                pattern_min,
+                (start + repunit_multiplier - 1) / repunit_multiplier,
+            );
+            let valid_max = std::cmp::min(pattern_max, end / repunit_multiplier);
+
+            // No P digit pattern produces a number in [start, end] for this
+            // L and P pairing, nothing to add, move on to next iteration.
+            if valid_min > valid_max {
+                continue;
+            }
+
+            for pattern in valid_min..=valid_max {
+                // One ID can be periodic at several pattern lengths at once:
+                // 111111 = "1" x6 = "11" x3 = "111" x2.
+                // To count each invalid ID exactly once, accept P only when it
+                // is the MINIMAL period of `pattern` i.e. when `pattern`
+                // itself is not a repetition of some smaller block. This is
+                // what is_primitive_pattern checks.
+                if !is_primitive_pattern(pattern, p) {
+                    continue;
+                }
+
+                // Reconstruct the full ID from its factorization.
+                total_sum += pattern * repunit_multiplier;
+            }
         }
-
-        current_num += 1;
     }
 
     total_sum
@@ -356,6 +444,5 @@ mod tests {
             let path = get_path_from_root("test_inputs/day02/aoc_example_repeating_ids.txt");
             assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 4174379265);
         }
-
     }
 }
