@@ -99,6 +99,86 @@ pub fn sum_invalid_ids_in_ranges(path: &PathBuf) -> i64 {
     invalid_ids_sum
 }
 
+fn separate_num_to_digits(mut num: i64, digits: &mut Vec<i64>) {
+    while num > 0 {
+        digits.push(num % 10);
+        num /= 10;
+    }
+    digits.reverse();
+}
+
+fn is_invalid_repeated(digits: &[i64]) -> bool {
+    let len = digits.len();
+
+    for pattern_len in 1..=(len / 2) {
+        if len % pattern_len != 0 {
+            continue;
+        }
+
+        let mut matches = true;
+
+        for i in 0..len {
+            if digits[i] != digits[i % pattern_len] {
+                matches = false;
+                break;
+            }
+        }
+
+        if matches {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn sum_repeating_invalid_id_in_range(start: i64, end: i64) -> i64 {
+    let mut total_sum = 0;
+    let mut current_num = start;
+
+    while current_num <= end {
+        let mut digits: Vec<i64> = Vec::new();
+        separate_num_to_digits(current_num, &mut digits);
+
+        if is_invalid_repeated(&digits) {
+            total_sum += current_num;
+        }
+
+        current_num += 1;
+    }
+
+    total_sum
+}
+
+pub fn sum_repeating_invalid_ids_in_ranges(path: &PathBuf) -> i64 {
+    let mut reader = buffered_reader(path).unwrap();
+    let mut buffer = Vec::new();
+    let mut invalid_ids_sum: i64 = 0;
+
+    loop {
+        buffer.clear();
+        let bytes_read = reader.read_until(b',', &mut buffer).unwrap();
+
+        if bytes_read == 0 {
+            break;
+        }
+
+        let mut slice = &buffer[..];
+
+        if slice.ends_with(&[b',']) {
+            slice = &slice[..(slice.len() - 1)];
+        }
+
+        if let Some((start_bytes, end_bytes)) = parse_range(slice) {
+            if let (Some(start), Some(end)) = (parse_int(start_bytes), parse_int(end_bytes)) {
+                invalid_ids_sum += sum_repeating_invalid_id_in_range(start, end);
+            }
+        }
+    }
+
+    invalid_ids_sum
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -111,7 +191,10 @@ mod tests {
 
             #[test]
             fn basic_range() {
-                assert_eq!(parse_range(b"1872-2931"), Some((&b"1872"[..], &b"2931"[..])));
+                assert_eq!(
+                    parse_range(b"1872-2931"),
+                    Some((&b"1872"[..], &b"2931"[..]))
+                );
             }
 
             #[test]
@@ -121,10 +204,7 @@ mod tests {
 
             #[test]
             fn non_digit_chars() {
-                assert_eq!(
-                    parse_range(b"abc-def"),
-                    Some((&b"abc"[..], &b"def"[..]))
-                );
+                assert_eq!(parse_range(b"abc-def"), Some((&b"abc"[..], &b"def"[..])));
             }
 
             #[test]
@@ -155,9 +235,6 @@ mod tests {
                 let input: &[u8] = "10\u{2014}20".as_bytes();
                 assert_eq!(parse_range(input), None);
             }
-
-
-
         }
 
         mod int {

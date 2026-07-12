@@ -12,5 +12,9 @@ fn main() {
 
     let day02_part1 = days::day02::sum_invalid_ids_in_ranges(&day02_path);
     println!("==========================================");
-    println!("Result for Day 2 Part 2: {:?}", day02_part1);
+    println!("Result for Day 2 Part 1: {:?}", day02_part1);
+
+    let day02_part2 = days::day02::sum_repeating_invalid_ids_in_ranges(&day02_path);
+    println!("==========================================");
+    println!("Result for Day 2 Part 2: {:?}", day02_part2)
 }
