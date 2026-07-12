@@ -35,11 +35,7 @@ fn sum_invalid_in_range(start: i64, end: i64) -> i64 {
     let mut current_num = start;
 
     while current_num <= end {
-        let num_digits = match current_num.checked_ilog10() {
-            Some(log) => log + 1,
-            None if current_num == 0 => 1,
-            _ => panic!("Negative number error"),
-        };
+        let num_digits = get_number_length(current_num);
 
         if num_digits >= 19 {
             panic!("The number in the given range does not fit in an i64");
@@ -107,10 +103,10 @@ fn separate_num_to_digits(mut num: i64, digits: &mut Vec<i64>) {
     digits.reverse();
 }
 
-fn get_number_length(num: i64) -> i64 {
+fn get_number_length(num: i64) -> u32 {
     match num.checked_ilog10() {
-        Some(log) => (log + 1) as i64,
-        None if num == 0 => 1 as i64,
+        Some(log) => log + 1,
+        None if num == 0 => 1,
         _ => panic!("Negative number error"),
     }
 }
@@ -144,8 +140,8 @@ fn is_primitive_pattern(pattern: i64, pattern_len: u32) -> bool {
 fn sum_repeating_invalid_id_in_range(start: i64, end: i64) -> i64 {
     let mut total_sum = 0;
 
-    let start_len = get_number_length(start) as u32;
-    let end_len = get_number_length(end) as u32;
+    let start_len = get_number_length(start);
+    let end_len = get_number_length(end);
 
     if end_len >= 19 {
         panic!("The number in the given range does not fit in an i64");
