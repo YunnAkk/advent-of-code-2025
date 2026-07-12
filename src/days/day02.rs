@@ -348,5 +348,14 @@ mod tests {
         }
     }
 
-    mod invalid_ids_repeated_sequence {}
+    mod invalid_ids_repeated_sequence {
+        use super::*;
+
+        #[test]
+        fn aoc_example() {
+            let path = get_path_from_root("test_inputs/day02/aoc_example_repeating_ids.txt");
+            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 4174379265);
+        }
+
+    }
 }
