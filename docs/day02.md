@@ -76,5 +76,175 @@ else {
 This completes the solution for Part 1.
 
 ## Part 2
+TODO
 
 ## Problem solving approach part 2
+While the bilateral partitioning used in Part 1 effectively identifies IDs that repeat exactly twice, it lacks the flexibility to generalize to sequences with arbitrary repetition frequencies. To identify invalid IDs defined by repeating sequences, we leverage the mathematical property of periodicity. A periodic ID of total length $L$ is formed by a pattern (prefix) of length $P$ that repeats $k$ times. This relationship is defined by:
+
+$$L = P \cdot k$$
+
+### Periodic Analysis and Constraints
+The problem specifies that a pattern must repeat at least twice, establishing the constraint $k \ge 2$. From
+
+$$P = \frac{L}{k}$$
+
+and the inverse proportionality between $P$ and $k$, the maximum possible pattern length $P_{\text{max}}$ for any length $L$ is reached when $k$ is at its minimum
+
+$$P_{\max} = \frac{L}{k_{\min}} = \frac{L}{2}$$
+
+A further constraint is that $P$ must divide $L$ exactly without remainder. The candidate pattern lengths for a given $L$ are therefore the divisors of $L$ in the range $1 \le P \le L/2$.
+
+### The Repunit Multiplier and Geometric Series
+Any number in positional notation expands as a sum of its digits weighted by powers of the base. For a periodic number, this expansion factors neatly. Consider $424242$ with pattern $42$ and $P = 2$:
+
+$$424242 = 42 \cdot 10^4 + 42 \cdot 10^2 + 42 \cdot 10^0 = 42 \cdot (10^4 + 10^2 + 1) = 42 \cdot 10101$$
+
+The factor $10101$ is a repunit multiplier ($M$). This value acts as a scaling constant that distributes the $P$ digit pattern across the full $L$ digit span at regular intervals. In base 10 arithmetic, multiplying the pattern by $10^{i \cdot P}$ shifts the pattern exactly $i \cdot P$ positions to the left. By summing $k$ such terms where the exponents are $\{0, P, 2P, \dots, (k-1)P\}$, each instance of the pattern is placed sequentially so that the end of one instance is perfectly adjacent to the start of the next. 
+
+Because each term in the multiplier $M$ is a power of $10^P$, $M$ is a geometric series with a common ratio $r = 10^P$ and a total of $k$ terms:
+
+$$M = \sum_{i=0}^{k-1} (10^P)^i = 1 + 10^P + 10^{2P} + \dots + 10^{(k-1)P}$$
+
+The closed form of a geometric series $S = a + ar + ar^2 + \cdots + ar^{n-1}$ is derived by multiplying $S$ with $r$
+
+$$rS = r(a + ar + ar^2 + \cdots + ar^{n-1})$$
+
+$$= ar + ar^2 + ar^3 + \cdots + ar^{n}$$
+
+Then subtracting one equation from the other
+
+$$S - rS = a + ar + ar^2 + \cdots + ar^{n-1} - (ar + ar^2 + ar^3 + \cdots + ar^{n})$$
+
+$$S - rS = a - ar^{n}$$
+
+$$S(1 - r) = a(1 - r^{n})$$
+
+$$S = a \frac{1 - r^{n}}{1 - r} = a\frac{r^{n} - 1}{r - 1}$$
+
+where the last equality multiplies numerator and denominator by $-1$. Substituting the starting value $a = 1$, the common ratio $r = 10^P$, and the number of terms $n = k = L/P$
+
+$$M = \frac{(10^P)^{L/P} - 1}{10^P - 1} = \frac{10^L - 1}{10^P - 1}$$
+
+The last step applies the exponent rule $(10^P)^{L/P} = 10^{P \cdot (L/P)} = 10^L$. The simplification $P \cdot (L/P) = L$ follows directly from the definition $k = L/P$ combined with the constraint $P \cdot k = L$.
+
+Example: For $424242$ with $P = 2$, $L = 6$
+
+$$M = \frac{10^6 - 1}{10^2 - 1} = \frac{999999}{99} = 10101 \qquad 42 \cdot 10101 = 424242$$
+
+### Code Implementation
+The implementation loops over total lengths $L$ from start_len to end_len and for each $L$, over pattern lengths $P$ from $1$ to $L/2$
+
+```rust
+let start_len = get_number_length(start);
+let end_len = get_number_length(end);
+for l in start_len..=end_len {
+    let r_n = 10_i64.pow(l);          // 10^L
+    let numerator = r_n - 1;          // 10^L - 1
+    // ...
+    for p in 1..=(l / 2) {
+        if l % p != 0 { continue; }   // P must divide L
+        let block = 10_i64.pow(p);    // 10^P
+        let repunit_multiplier = numerator / (block - 1);  // M = (10^L - 1) / (10^P - 1)
+        // ...
+    }
+}
+```
+
+Note that unlike Part 1, odd length numbers are not skipped. An odd length ID can be invalid when its pattern length is also odd (e.g. $111$ with $P = 1$, $k = 3$, or $824824824$ with $P = 3$, $k = 3$).
+
+
+### Skip Ahead Optimization
+As in Part 1, iterating through every possible ID to check for periodicity is computationally expensive. Instead, we utilize the monotonicity of the function $f(\text{pattern}) = \text{pattern} \cdot M$ to solve for the valid pattern range within a given interval $[start, end]$.
+
+For the lower bound we require the smallest integer $p$ such that $p \times M \geq start$, i.e. $\lceil start / M \rceil$. Since Rust's integer division truncates toward zero, we synthesize ceiling division via the identity
+
+$$\left\lceil \frac{a}{b} \right\rceil = \left\lfloor \frac{a + b - 1}{b} \right\rfloor$$
+
+yielding the expression $(start + M - 1) / M$.
+
+Adding $M - 1$ to the numerator ensures that any non zero remainder pushes the quotient up to the subsequent integer, effectively synthesizing the ceiling function through integer truncation, while integral multiples remain unaffected.
+
+For the upper bound we require the largest integer $p$ such that $p \times M \leq end$, calculated as $\lfloor end/M \rfloor$. Rust's integer division already floors for non negative operands, which is exactly $\lfloor end/M \rfloor$.
+
+The asymmetry, ceiling on the lower bound and floor on the upper bound reflects the inequality directions. We seek "at least start" and "at most end".
+
+Finally, we clamp the division results against the physical constraints of a $P$ digit range. A $P$ digit pattern cannot have a leading zero, a pattern such as 012 would produce 012012, which as an integer equals 12012 (a 5 digit number rather than 6), thereby violating the fixed length assumption that the ID has length $L$. The valid pattern range is therefore $[10^{P-1}, 10^P - 1]$. The lower bound is clamped upward against $10^{P-1}$ (the smallest valid $P$ digit number), while the upper bound is clamped downward against $10^P - 1$ (the largest valid $P$ digit number). This prevents overflow into $(P+1)$ digit patterns belonging to a different $P$ iteration.
+
+```rust
+let pattern_min = 10_i64.pow(p - 1); // 10^(P-1): smallest P-digit number (no leading zero)
+let pattern_max = block - 1;         // 10^P - 1: largest P-digit number
+
+let valid_min = std::cmp::max(pattern_min,
+                (start + repunit_multiplier - 1) / repunit_multiplier);
+let valid_max = std::cmp::min(pattern_max,
+                end / repunit_multiplier);
+
+if valid_min > valid_max {
+    continue;
+}
+```
+
+If `valid_min > valid_max`, then no $P$ digit pattern yields a product in $[start, end]$ for this $(L, P)$ pair and the inner loop body is skipped entirely.
+
+### Representation Redundancy and Pattern Primitivity
+Next we have to handle a critical challenge in this implementation which arises from the potential for representation redundancy. As established, a periodic ID of length $L$ can be decomposed into a pattern of length $P$ and a repetition factor $k$, such that $L = P \cdot k$. However, this decomposition is not necessarily unique. For instance, the ID $111111$ can be validly described by several $(P, k)$ pairs:
+
+| Pattern | $P$ (length) | $k$ (repetitions) |
+|---------|----------|--------------|
+| $1$     | $1$      | $6$          |
+| $11$    | $2$      | $3$          |
+| $111$   | $3$      | $2$          |
+
+If the algorithm iterates through all possible pattern lengths and repetition factors without a uniqueness constraint, a single value would be aggregated into the total sum multiple times leading to an incorrect result. To ensure each periodic number is counted exactly once, we must enforce the condition that $P$ is a primitive pattern. A pattern is defined as primitive if it cannot be further decomposed into a smaller repeating sub unit. In the example above, only $P=1$ is primitive. $11$ and $111$ are periodic repetitions of the fundamental unit $1$.
+
+#### The is_primitive_pattern Verification
+Before adding a value to the summation, the function `is_primitive_pattern` is invoked to validate the primitivity of the current pattern. The logic proceeds in two steps:
+
+**1. Candidate Period Identification**: The function iterates through all possible sub periods $T$ where $1 \leq T < P$. A sub period $T$ is only a candidate for periodicity if it is a proper divisor of $P$. If $T$ does not divide $P$ evenly, it is mathematically impossible for the pattern to be a perfect repetition of a block of length $T$.
+
+**2. Periodicity Verification via Modular Indexing**: To determine if a pattern is a repetition of a candidate sub period $T$, we verify if the digit at any index $i$ is identical to the digit at the corresponding position within the first potential block. This is implemented using modular arithmetic
+
+```rust
+for sub_period in 1..pattern_len {
+    if pattern_len % sub_period != 0 {
+        continue;
+    }
+
+    let mut is_periodic = true;
+    for i in 0..digits.len() {
+        if digits[i] != digits[i % sub_period] {
+            is_periodic = false;
+            break;
+        }
+    }
+
+    if is_periodic {
+        return false;  // a smaller period exists -> not primitive
+    }
+}
+
+return true;  // no sub-period matched -> pattern is primitive
+```
+
+In this loop, `digits[i % sub_period]` maps every index $i$ back to its relative position within the first $T$ digits. If this condition holds for all $i$, the pattern is proven to be periodic (non primitive), and the function returns `false`.
+
+**Example**: pattern $= 123123$, $P = 6$
+
+When evaluating the pattern $123123$, the function tests the following:
+
+- At $T = 1$: The algorithm compares $\text{digits}[1] = 2$ against $\text{digits}[1 \bmod 1] = \text{digits}[0] = 1$. Since $2 \neq 1$, the pattern is not a repetition of length 1.
+- At $T = 2$: The algorithm compares $\text{digits}[2] = 3$ against $\text{digits}[2 \bmod 2] = \text{digits}[0] = 1$. Since $3 \neq 1$, it is not a repetition of length 2.
+- At $T = 3$: The algorithm compares every $\text{digits}[i]$ to $\text{digits}[i \bmod 3]$.
+    - $i=3: \text{digits}[3] = 1 = \text{digits}[0] = 1$
+    - $i=4: \text{digits}[4] = 2 = \text{digits}[1] = 2$
+    - $i=5: \text{digits}[5] = 3 = \text{digits}[2] = 3$
+
+All indices satisfy the condition. The pattern is identified as periodic with a period of 3, and is thus rejected.
+
+By filtering for primitivity, the algorithm ensures that $111111$ is only processed when $P = 1$ and $k = 6$. Subsequent attempts to process it via patterns $11$ or $111$ (which would correspond to $P = 2$ and $P = 3$) are caught by `is_primitive_pattern` and excluded, maintaining the integrity of the summation.
+
+And finally, once a primitive pattern is confirmed, the full ID is reconstructed and accumulated
+
+```rust
+total_sum += pattern * repunit_multiplier;
+```
