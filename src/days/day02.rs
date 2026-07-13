@@ -2,6 +2,14 @@ use crate::days::utils::buffered_reader;
 use std::io::BufRead;
 use std::path::PathBuf;
 
+fn get_number_length(num: i64) -> u32 {
+    match num.checked_ilog10() {
+        Some(log) => log + 1,
+        None if num == 0 => 1,
+        _ => panic!("Negative number error"),
+    }
+}
+
 fn parse_range(bytes: &[u8]) -> Option<(&[u8], &[u8])> {
     if let Some(hyphen_idx) = bytes.iter().position(|&b| b == b'-') {
         let start_bytes = &bytes[..hyphen_idx];
@@ -66,49 +74,12 @@ fn sum_invalid_in_range(start: i64, end: i64) -> i64 {
     total_sum
 }
 
-pub fn sum_invalid_ids_in_ranges(path: &PathBuf) -> i64 {
-    let mut reader = buffered_reader(path).unwrap();
-    let mut buffer = Vec::new();
-    let mut invalid_ids_sum: i64 = 0;
-
-    loop {
-        buffer.clear();
-        let bytes_read = reader.read_until(b',', &mut buffer).unwrap();
-
-        if bytes_read == 0 {
-            break;
-        }
-
-        let mut slice = &buffer[..];
-
-        if slice.ends_with(&[b',']) {
-            slice = &slice[..(slice.len() - 1)];
-        }
-
-        if let Some((start_bytes, end_bytes)) = parse_range(slice) {
-            if let (Some(start), Some(end)) = (parse_int(start_bytes), parse_int(end_bytes)) {
-                invalid_ids_sum += sum_invalid_in_range(start, end);
-            }
-        }
-    }
-
-    invalid_ids_sum
-}
-
 fn separate_num_to_digits(mut num: i64, digits: &mut Vec<i64>) {
     while num > 0 {
         digits.push(num % 10);
         num /= 10;
     }
     digits.reverse();
-}
-
-fn get_number_length(num: i64) -> u32 {
-    match num.checked_ilog10() {
-        Some(log) => log + 1,
-        None if num == 0 => 1,
-        _ => panic!("Negative number error"),
-    }
 }
 
 fn is_primitive_pattern(pattern: i64, pattern_len: u32) -> bool {
@@ -234,13 +205,14 @@ fn sum_repeating_invalid_id_in_range(start: i64, end: i64) -> i64 {
     total_sum
 }
 
-pub fn sum_repeating_invalid_ids_in_ranges(path: &PathBuf) -> i64 {
+fn sum_over_ranges_in_file(path: &PathBuf, f: impl Fn(i64, i64) -> i64) -> i64 {
     let mut reader = buffered_reader(path).unwrap();
     let mut buffer = Vec::new();
     let mut invalid_ids_sum: i64 = 0;
 
     loop {
         buffer.clear();
+
         let bytes_read = reader.read_until(b',', &mut buffer).unwrap();
 
         if bytes_read == 0 {
@@ -255,12 +227,20 @@ pub fn sum_repeating_invalid_ids_in_ranges(path: &PathBuf) -> i64 {
 
         if let Some((start_bytes, end_bytes)) = parse_range(slice) {
             if let (Some(start), Some(end)) = (parse_int(start_bytes), parse_int(end_bytes)) {
-                invalid_ids_sum += sum_repeating_invalid_id_in_range(start, end);
+                invalid_ids_sum += f(start, end);
             }
         }
     }
 
     invalid_ids_sum
+}
+
+pub fn sum_invalid_ids_in_ranges(path: &PathBuf) -> i64 {
+    sum_over_ranges_in_file(path, sum_invalid_in_range)
+}
+
+pub fn sum_repeating_invalid_ids_in_ranges(path: &PathBuf) -> i64 {
+    sum_over_ranges_in_file(path, sum_repeating_invalid_id_in_range)
 }
 
 #[cfg(test)]
