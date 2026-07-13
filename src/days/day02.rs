@@ -127,7 +127,7 @@ fn sum_repeating_invalid_id_in_range(start: i64, end: i64) -> i64 {
 
         // p = length of one repetition of the pattern (the "block").
         // Two constraints on P:
-        // - P must divide L evenly, so the pattern tiles the ID with no leftover.
+        // - P must divide L evenly, so the pattern divides the ID with no leftover.
         // - "repeated at least twice" means k = L / P >= 2, or rather P <= L / 2.
         for p in 1..=(l / 2) {
             if l % p != 0 {
