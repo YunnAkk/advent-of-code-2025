@@ -281,7 +281,7 @@ mod tests {
         }
 
         #[test]
-        fn maximum_positive() {
+        fn i64_max() {
             assert_eq!(get_number_length(i64::MAX), 19);
         }
 
@@ -294,15 +294,9 @@ mod tests {
 
         #[test]
         #[should_panic]
-        fn maximum_negative() {
+        fn i64_min() {
             get_number_length(i64::MIN);
         }
-
-
-
-
-
-
     }
 
     mod parse {
@@ -420,6 +414,90 @@ mod tests {
             fn whitespace_only_returns_none() {
                 assert_eq!(parse_int(b"   "), None);
             }
+        }
+    }
+
+    mod num_to_digit {
+        use super::*;
+
+        #[test]
+        fn single_digits() {
+            let mut digits = Vec::new();
+            for i in 1..=9 {
+                digits.clear();
+                separate_num_to_digits(i, &mut digits);
+                assert_eq!(digits, vec![i])
+            }
+        }
+
+        #[test]
+        fn multi_digits() {
+            let mut digits = Vec::new();
+            separate_num_to_digits(123, &mut digits);
+            assert_eq!(digits, vec![1, 2, 3]);
+        }
+
+        #[test]
+        fn trailing_zeros() {
+            let mut digits = Vec::new();
+            separate_num_to_digits(100, &mut digits);
+            assert_eq!(digits, vec![1, 0, 0]);
+        }
+
+        #[test]
+        fn internal_zeros() {
+            let mut digits = Vec::new();
+            separate_num_to_digits(1024, &mut digits);
+            assert_eq!(digits, vec![1, 0, 2, 4]);
+        }
+
+        #[test]
+        fn repeated_digits() {
+            let mut digits = Vec::new();
+            separate_num_to_digits(111111, &mut digits);
+            assert_eq!(digits, vec![1, 1, 1, 1, 1, 1]);
+        }
+
+        #[test]
+        fn power_of_ten() {
+            let mut digits = Vec::new();
+            separate_num_to_digits(1000, &mut digits);
+            assert_eq!(digits, vec![1, 0, 0, 0]);
+        }
+
+        #[test]
+        fn i64_max() {
+            let mut digits = Vec::new();
+            separate_num_to_digits(i64::MAX, &mut digits);
+            assert_eq!(digits, vec![9, 2, 2, 3, 3, 7, 2, 0, 3, 6, 8, 5, 4, 7, 7, 5, 8, 0, 7]);
+        }
+
+        #[test]
+        fn zero_is_no_op() {
+            let mut digits = Vec::new();
+            separate_num_to_digits(0, &mut digits);
+            assert!(digits.is_empty(), "Zero should not push any digits");
+        }
+
+        #[test]
+        fn zero_leaves_existing_vec_unchanged() {
+            let mut digits = vec![9, 9];
+            separate_num_to_digits(0, &mut digits);
+            assert_eq!(digits, vec![9, 9], "Zero must not modify existing vector");
+        }
+
+        #[test]
+        fn negative_one_unchanged() {
+            let mut digits = vec![4, 2];
+            separate_num_to_digits(-1, &mut digits);
+            assert_eq!(digits, vec![4, 2], "Negative numbers must not modify existing vector");
+        }
+
+        #[test]
+        fn i64_min_unchanged() {
+            let mut digits = vec![7];
+            separate_num_to_digits(i64::MIN, &mut digits);
+            assert_eq!(digits, vec![7], "i64::MIN must not modify existing vector");
         }
     }
 
