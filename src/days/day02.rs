@@ -632,5 +632,41 @@ mod tests {
             let path = get_path_from_root("test_inputs/day02/aoc_example_repeating_ids.txt");
             assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 4174379265);
         }
+
+        #[test]
+        fn left_equal_right() {
+            let path = get_path_from_root("test_inputs/day02/left_equal_right.txt");
+            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 48985);
+        }
+
+        #[test]
+        fn left_greater() {
+            let path = get_path_from_root("test_inputs/day02/left_greater_right.txt");
+            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 4444);
+        }
+
+        #[test]
+        fn left_lesser() {
+            let path = get_path_from_root("test_inputs/day02/left_less_right.txt");
+            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 2222);
+        }
+
+        #[test]
+        fn no_invalid() {
+            let path = get_path_from_root("test_inputs/day02/no_invalid.txt");
+            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 0);
+        }
+
+        #[test]
+        fn single_invalid() {
+            let path = get_path_from_root("test_inputs/day02/single_invalid.txt");
+            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 11);
+        }
+
+        #[test]
+        fn many_sequences() {
+            let path = get_path_from_root("test_inputs/day02/many_sequences.txt");
+            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 25426801288);
+        }
     }
 }
