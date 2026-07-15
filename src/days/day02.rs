@@ -75,6 +75,9 @@ fn sum_invalid_in_range(start: i64, end: i64) -> i64 {
 }
 
 fn separate_num_to_digits(mut num: i64, digits: &mut Vec<i64>) {
+    if num <= 0 {
+        return;
+    }
     while num > 0 {
         digits.push(num % 10);
         num /= 10;
