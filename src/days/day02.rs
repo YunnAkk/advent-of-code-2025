@@ -291,7 +291,6 @@ mod tests {
             get_number_length(-1);
         }
 
-
         #[test]
         #[should_panic]
         fn i64_min() {
@@ -469,7 +468,10 @@ mod tests {
         fn i64_max() {
             let mut digits = Vec::new();
             separate_num_to_digits(i64::MAX, &mut digits);
-            assert_eq!(digits, vec![9, 2, 2, 3, 3, 7, 2, 0, 3, 6, 8, 5, 4, 7, 7, 5, 8, 0, 7]);
+            assert_eq!(
+                digits,
+                vec![9, 2, 2, 3, 3, 7, 2, 0, 3, 6, 8, 5, 4, 7, 7, 5, 8, 0, 7]
+            );
         }
 
         #[test]
@@ -490,7 +492,11 @@ mod tests {
         fn negative_one_unchanged() {
             let mut digits = vec![4, 2];
             separate_num_to_digits(-1, &mut digits);
-            assert_eq!(digits, vec![4, 2], "Negative numbers must not modify existing vector");
+            assert_eq!(
+                digits,
+                vec![4, 2],
+                "Negative numbers must not modify existing vector"
+            );
         }
 
         #[test]
@@ -498,6 +504,37 @@ mod tests {
             let mut digits = vec![7];
             separate_num_to_digits(i64::MIN, &mut digits);
             assert_eq!(digits, vec![7], "i64::MIN must not modify existing vector");
+        }
+    }
+
+    mod primitive_pattern_detection {
+        use super::*;
+
+        #[test]
+        fn single_digit_always_primitive() {
+            for i in 0..=9 {
+                assert!(is_primitive_pattern(i, 1))
+            }
+        }
+
+        #[test]
+        fn is_primitive_detected_correctly() {
+            assert!(is_primitive_pattern(12, 2));
+            assert!(is_primitive_pattern(121, 3));
+            assert!(is_primitive_pattern(1122, 4));
+            assert!(is_primitive_pattern(1213, 4));
+            assert!(is_primitive_pattern(10203, 5));
+            assert!(is_primitive_pattern(123456, 6));
+            assert!(is_primitive_pattern(12345678, 8));
+            assert!(is_primitive_pattern(123456789, 9));
+        }
+
+        #[test]
+        fn is_not_primitive_detected_correctly() {
+            assert!(!is_primitive_pattern(55, 2));
+            assert!(!is_primitive_pattern(1212, 4));
+            assert!(!is_primitive_pattern(123123, 6));
+            assert!(!is_primitive_pattern(12341234, 8));
         }
     }
 
