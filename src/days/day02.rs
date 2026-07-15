@@ -538,6 +538,46 @@ mod tests {
         }
     }
 
+    mod invalid_in_range {
+        use super::*;
+
+        #[test]
+        fn no_invalid_number() {
+            assert_eq!(sum_invalid_in_range(1, 9), 0);
+            assert_eq!(sum_invalid_in_range(10, 10), 0);
+            assert_eq!(sum_invalid_in_range(100, 999), 0);
+            assert_eq!(sum_invalid_in_range(100, 1000), 0);
+            assert_eq!(sum_invalid_in_range(2134, 2221), 0);
+        }
+
+        #[test]
+        fn single_invalid_number() {
+            assert_eq!(sum_invalid_in_range(11, 11), 11);
+            assert_eq!(sum_invalid_in_range(12, 30), 22);
+            assert_eq!(sum_invalid_in_range(20, 30), 22);
+            assert_eq!(sum_invalid_in_range(4848, 4848), 4848);
+            assert_eq!(sum_invalid_in_range(123123, 123123), 123123);
+            assert_eq!(sum_invalid_in_range(12341234, 12341234), 12341234);
+        }
+
+        #[test]
+        fn multiple_invalid_numbers() {
+            assert_eq!(sum_invalid_in_range(0, 100), 495);
+            assert_eq!(sum_invalid_in_range(10, 99), 495);
+            assert_eq!(sum_invalid_in_range(80, 100), 187);
+            assert_eq!(sum_invalid_in_range(99, 1010), 1109);
+            assert_eq!(sum_invalid_in_range(1000, 9999), 495405);
+            assert_eq!(sum_invalid_in_range(100000, 999999), 495044550);
+            assert_eq!(sum_invalid_in_range(10000000, 10010000), 10001000);
+        }
+
+        #[test]
+        #[should_panic]
+        fn panics_on_nineteen_digit_number() {
+            sum_invalid_in_range(1000000000000000000, 1000000000000000000);
+        }
+    }
+
     mod invalid_ids_single_sequence {
         use super::*;
 
