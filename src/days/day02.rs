@@ -1,7 +1,25 @@
+//! Gift Shop — Invalid IDs
+//!
+//! A gift shop database has invalid product IDs mixed into otherwise valid
+//! ranges. The puzzle input is a comma separated list of ranges (e.g.
+//! `11-22,95-115,998-1012`), each giving a first and last ID separated by a
+//! dash. IDs never have leading zeroes.
+//!
+//!
+//! # Part One
+//! Sum invalid IDs which are defined as an even number with the left
+//! half being equal to its right half
+//!
+//! # Part Two
+//! Sum invalid IDs which are defined as a number made up of a repeating
+//! pattern of numbers
 use crate::days::utils::buffered_reader;
 use std::io::BufRead;
 use std::path::PathBuf;
 
+/// Returns the number of base-10 digits in `num`.
+///
+/// Panics for negative values.
 fn get_number_length(num: i64) -> u32 {
     match num.checked_ilog10() {
         Some(log) => log + 1,
@@ -10,6 +28,10 @@ fn get_number_length(num: i64) -> u32 {
     }
 }
 
+/// Splits `bytes` on the first ASCII hyphen (`-`) into `(before, after)`.
+///
+/// Returns `None` if no hyphen is present. Does not validate that either
+/// side is numeric; use [`parse_int`] on the results for that.
 fn parse_range(bytes: &[u8]) -> Option<(&[u8], &[u8])> {
     if let Some(hyphen_idx) = bytes.iter().position(|&b| b == b'-') {
         let start_bytes = &bytes[..hyphen_idx];
@@ -21,6 +43,10 @@ fn parse_range(bytes: &[u8]) -> Option<(&[u8], &[u8])> {
     }
 }
 
+/// Parses an `i64` from a byte slice, ignoring any ASCII whitespace.
+///
+/// Returns `None` if the slice contains a non-digit, non-whitespace byte,
+/// or if it contains no digits at all (e.g. empty or whitespace-only input).
 fn parse_int(bytes: &[u8]) -> Option<i64> {
     let mut val: i64 = 0;
     let mut has_digits = false;
@@ -38,6 +64,14 @@ fn parse_int(bytes: &[u8]) -> Option<i64> {
     if has_digits { Some(val) } else { None }
 }
 
+/// Sums all invalid IDs in `[start, end]`, where an ID is invalid if its
+/// digit count is even and its left half is equivalent to its right half.
+///
+/// Uses a jump ahead strategy rather than checking every number, jumps ahead
+/// on each iteration: to the next matching invalid ID candidate,
+///
+/// Panics if any number in the range would require 19 or more digits
+/// (too large to safely represent as `i64`).
 fn sum_invalid_in_range(start: i64, end: i64) -> i64 {
     let mut total_sum = 0;
     let mut current_num = start;
@@ -74,6 +108,10 @@ fn sum_invalid_in_range(start: i64, end: i64) -> i64 {
     total_sum
 }
 
+/// Breaks down a whole number into its individual digits and appends each
+/// digit to a vector, most significant digit first.
+///
+/// No op for `num <= 0`, `digits` is left unchanged in that case.
 fn separate_num_to_digits(mut num: i64, digits: &mut Vec<i64>) {
     if num <= 0 {
         return;
@@ -85,6 +123,12 @@ fn separate_num_to_digits(mut num: i64, digits: &mut Vec<i64>) {
     digits.reverse();
 }
 
+/// Returns `true` if `pattern` with `pattern_len` digits is not itself
+/// a repetition of some smaller digit block.
+///
+/// For example, `12` is primitive, but `1212` (a repeat of `12`) and `55`
+/// (a repeat of `5`) are not. Used to avoid double counting IDs that are
+/// periodic at multiple block lengths.
 fn is_primitive_pattern(pattern: i64, pattern_len: u32) -> bool {
     let mut digits: Vec<i64> = Vec::new();
     separate_num_to_digits(pattern, &mut digits);
@@ -111,6 +155,16 @@ fn is_primitive_pattern(pattern: i64, pattern_len: u32) -> bool {
     true
 }
 
+/// Sums all IDs in `[start, end]` that consist of a primitive digit pattern
+/// repeated two or more times (e.g. `121212`, `9595`, `1111`).
+///
+/// Rather than enumerating every number in range, this iterates over every
+/// valid (digit length `L`, pattern length `P`) pair, derives the closed form
+/// multiplier for turning a `P` digit pattern into an `L` digit repeated ID,
+/// and narrows the pattern search to just those producing a value inside
+/// `[start, end]`.
+///
+/// Panics if `end` would require 19 or more digits (too large for `i64`).
 fn sum_repeating_invalid_id_in_range(start: i64, end: i64) -> i64 {
     let mut total_sum = 0;
 
@@ -208,6 +262,8 @@ fn sum_repeating_invalid_id_in_range(start: i64, end: i64) -> i64 {
     total_sum
 }
 
+/// Reads comma separated `start-end` ranges from the file at `path`,
+/// applies a function `f` to each parsed `(start, end)` pair and sums the results.
 fn sum_over_ranges_in_file(path: &PathBuf, f: impl Fn(i64, i64) -> i64) -> i64 {
     let mut reader = buffered_reader(path).unwrap();
     let mut buffer = Vec::new();
@@ -238,10 +294,18 @@ fn sum_over_ranges_in_file(path: &PathBuf, f: impl Fn(i64, i64) -> i64) -> i64 {
     invalid_ids_sum
 }
 
+/// Part 1 — sums all invalid IDs across every range in the file at `path`.
+///
+/// See [`sum_invalid_in_range`] for the invalidity rule applied to each range.
 pub fn sum_invalid_ids_in_ranges(path: &PathBuf) -> i64 {
     sum_over_ranges_in_file(path, sum_invalid_in_range)
 }
 
+/// Part 2 — sums all invalid IDs formed by a repeated pattern across every
+/// range in the file at `path`.
+///
+/// See [`sum_repeating_invalid_id_in_range`] for the invalidity rule applied
+/// to each range.
 pub fn sum_repeating_invalid_ids_in_ranges(path: &PathBuf) -> i64 {
     sum_over_ranges_in_file(path, sum_repeating_invalid_id_in_range)
 }
