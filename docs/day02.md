@@ -79,7 +79,7 @@ This completes the solution for Part 1.
 TODO
 
 ## Problem solving approach part 2
-While the bilateral partitioning used in Part 1 effectively identifies IDs that repeat exactly twice, it lacks the flexibility to generalize to sequences with arbitrary repetition frequencies. To identify invalid IDs defined by repeating sequences, we leverage the mathematical property of periodicity. A periodic ID of total length $L$ is formed by a pattern (prefix) of length $P$ that repeats $k$ times. This relationship is defined by:
+While the bilateral partitioning used in Part 1 effectively identifies IDs that repeat exactly twice, it lacks the flexibility to generalize to sequences with arbitrary repetition frequencies. To identify invalid IDs defined by repeating sequences, we leverage the mathematical property of periodicity. A periodic ID of total length $L$ is formed by a pattern (prefix) of length $P$ that repeats $k$ times. This relationship is defined by
 
 $$L = P \cdot k$$
 
@@ -101,7 +101,7 @@ $$424242 = 42 \cdot 10^4 + 42 \cdot 10^2 + 42 \cdot 10^0 = 42 \cdot (10^4 + 10^2
 
 The factor $10101$ is a repunit multiplier ($M$). This value acts as a scaling constant that distributes the $P$ digit pattern across the full $L$ digit span at regular intervals. In base 10 arithmetic, multiplying the pattern by $10^{i \cdot P}$ shifts the pattern exactly $i \cdot P$ positions to the left. By summing $k$ such terms where the exponents are $\{0, P, 2P, \dots, (k-1)P\}$, each instance of the pattern is placed sequentially so that the end of one instance is perfectly adjacent to the start of the next. 
 
-Because each term in the multiplier $M$ is a power of $10^P$, $M$ is a geometric series with a common ratio $r = 10^P$ and a total of $k$ terms:
+Because each term in the multiplier $M$ is a power of $10^P$, $M$ is a geometric series with a common ratio $r = 10^P$ and a total of $k$ terms
 
 $$M = \sum_{i=0}^{k-1} (10^P)^i = 1 + 10^P + 10^{2P} + \dots + 10^{(k-1)P}$$
 
@@ -150,25 +150,31 @@ for l in start_len..=end_len {
 }
 ```
 
-Note that unlike Part 1, odd length numbers are not skipped. An odd length ID can be invalid when its pattern length is also odd (e.g. $111$ with $P = 1$, $k = 3$, or $824824824$ with $P = 3$, $k = 3$).
+Note that unlike Part 1, odd length numbers are not skipped. An odd length ID can be invalid when its pattern length is also odd (For example the number $111$ with $P = 1$, $k = 3$, or $824824824$ with $P = 3$, $k = 3$).
 
 
 ### Skip Ahead Optimization
 As in Part 1, iterating through every possible ID to check for periodicity is computationally expensive. Instead, we utilize the monotonicity of the function $f(\text{pattern}) = \text{pattern} \cdot M$ to solve for the valid pattern range within a given interval $[start, end]$.
 
-For the lower bound we require the smallest integer $p$ such that $p \times M \geq start$, i.e. $\lceil start / M \rceil$. Since Rust's integer division truncates toward zero, we synthesize ceiling division via the identity
+For the lower bound we require the smallest integer $p$ such that $p \cdot M \geq start$, i.e. $\lceil start / M \rceil$. Since Rust's integer division truncates toward zero, we synthesize ceiling division via the identity
 
 $$\left\lceil \frac{a}{b} \right\rceil = \left\lfloor \frac{a + b - 1}{b} \right\rfloor$$
 
-yielding the expression $(start + M - 1) / M$.
+yielding the expression 
+
+$$\frac{(start + M - 1)}{M}$$
 
 Adding $M - 1$ to the numerator ensures that any non zero remainder pushes the quotient up to the subsequent integer, effectively synthesizing the ceiling function through integer truncation, while integral multiples remain unaffected.
 
-For the upper bound we require the largest integer $p$ such that $p \times M \leq end$, calculated as $\lfloor end/M \rfloor$. Rust's integer division already floors for non negative operands, which is exactly $\lfloor end/M \rfloor$.
+For the upper bound we require the largest integer $p$ such that $p \cdot M \leq end$, calculated as $\lfloor end/M \rfloor$. Rust's integer division already floors for non negative operands, which is exactly $\lfloor end/M \rfloor$.
 
 The asymmetry, ceiling on the lower bound and floor on the upper bound reflects the inequality directions. We seek "at least start" and "at most end".
 
-Finally, we clamp the division results against the physical constraints of a $P$ digit range. A $P$ digit pattern cannot have a leading zero, a pattern such as 012 would produce 012012, which as an integer equals 12012 (a 5 digit number rather than 6), thereby violating the fixed length assumption that the ID has length $L$. The valid pattern range is therefore $[10^{P-1}, 10^P - 1]$. The lower bound is clamped upward against $10^{P-1}$ (the smallest valid $P$ digit number), while the upper bound is clamped downward against $10^P - 1$ (the largest valid $P$ digit number). This prevents overflow into $(P+1)$ digit patterns belonging to a different $P$ iteration.
+Finally, we clamp the division results against the physical constraints of a $P$ digit range. A $P$ digit pattern cannot have a leading zero, a pattern such as 012 would produce 012012, which as an integer equals 12012 (a 5 digit number rather than 6), thereby violating the fixed length assumption that the ID has length $L$. The valid pattern range is therefore
+
+$$[10^{P-1}, 10^P - 1]$$
+
+The lower bound is clamped upward against $`10^{P-1}`$ (the smallest valid $P$ digit number), while the upper bound is clamped downward against $`10^P - 1`$ (the largest valid $P$ digit number). This prevents overflow into $(P+1)$ digit patterns belonging to a different $P$ iteration.
 
 ```rust
 let pattern_min = 10_i64.pow(p - 1); // 10^(P-1): smallest P-digit number (no leading zero)
@@ -226,7 +232,7 @@ for sub_period in 1..pattern_len {
 return true;  // no sub-period matched -> pattern is primitive
 ```
 
-In this loop, `digits[i % sub_period]` maps every index $i$ back to its relative position within the first $T$ digits. If this condition holds for all $i$, the pattern is proven to be periodic (non primitive), and the function returns `false`.
+In this loop, `digits[i % sub_period]` maps every index $i$ back to its relative position within the first $T$ digits, representing the aforementioned first potential block. If this condition holds for all $i$, the pattern is proven to be periodic (non primitive), and the function returns `false`.
 
 **Example**: pattern $= 123123$, $P = 6$
 
