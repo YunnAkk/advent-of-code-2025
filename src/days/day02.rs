@@ -248,6 +248,60 @@ mod tests {
     use super::*;
     use crate::days::utils::get_path_from_root;
 
+    mod number_length {
+        use super::*;
+
+        #[test]
+        fn zero_input() {
+            assert_eq!(get_number_length(0), 1);
+        }
+
+        #[test]
+        fn single_digits() {
+            for i in 0..=9 {
+                assert_eq!(get_number_length(i), 1);
+            }
+        }
+
+        #[test]
+        fn double_digits() {
+            for i in 10..=99 {
+                assert_eq!(get_number_length(i), 2);
+            }
+        }
+
+        #[test]
+        fn triple_digits() {
+            for i in 100..=999 {
+                assert_eq!(get_number_length(i), 3);
+            }
+        }
+
+        #[test]
+        fn maximum_positive() {
+            assert_eq!(get_number_length(i64::MAX), 19);
+        }
+
+        #[test]
+        #[should_panic]
+        fn negative() {
+            get_number_length(-1);
+        }
+
+
+        #[test]
+        #[should_panic]
+        fn maximum_negative() {
+            get_number_length(i64::MIN);
+        }
+
+
+
+
+
+
+    }
+
     mod parse {
         use super::*;
         mod range {
