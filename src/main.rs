@@ -1,4 +1,6 @@
 mod days;
+#[cfg(test)]
+mod test_utils;
 
 fn main() {
     let day01_path = days::utils::get_path_from_root("inputs/day01/input.txt");
@@ -20,6 +22,4 @@ fn main() {
     let day03_part1 = days::day03::calculate_two_digit_joltage(&day03_path);
     println!("==========================================");
     println!("Result for Day 3 Part 1: {:?}", day03_part1)
-
-
 }

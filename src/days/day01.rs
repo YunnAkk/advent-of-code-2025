@@ -231,12 +231,10 @@ pub fn count_dial_zero_passes(path: &PathBuf, start_value: i32) -> Result<i32, D
 
 #[cfg(test)]
 mod tests {
-    use super::super::utils;
     use super::*;
+    use crate::define_day_in_path;
 
-    fn path_for(name: &str) -> PathBuf {
-        utils::get_path_from_root(&format!("test_inputs/day01/{name}"))
-    }
+    define_day_in_path!("01");
 
     mod count_dial_zero_hits {
         use super::*;

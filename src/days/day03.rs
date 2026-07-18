@@ -45,8 +45,12 @@ pub fn calculate_two_digit_joltage(path: &PathBuf) -> i32 {
     total_sum
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
+    use crate::define_day_in_path;
+
+    define_day_in_path!("03");
 
     mod separate_string_to_digits {
         use super::*;
@@ -130,6 +134,6 @@ mod tests {
     mod calculate_two_digit_joltage {
         use super::*;
 
-        
+
     }
 }

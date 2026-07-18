@@ -313,7 +313,9 @@ pub fn sum_repeating_invalid_ids_in_ranges(path: &PathBuf) -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::days::utils::get_path_from_root;
+    use crate::define_day_in_path;
+    
+    define_day_in_path!("02");
 
     mod number_length {
         use super::*;
@@ -647,44 +649,37 @@ mod tests {
 
         #[test]
         fn aoc_example() {
-            let path = get_path_from_root("test_inputs/day02/aoc_example.txt");
-            assert_eq!(sum_invalid_ids_in_ranges(&path), 1227775554);
+            assert_eq!(sum_invalid_ids_in_ranges(&path_for("aoc_example.txt")), 1227775554);
         }
 
         #[test]
         fn left_equal_right() {
-            let path = get_path_from_root("test_inputs/day02/left_equal_right.txt");
-            assert_eq!(sum_invalid_ids_in_ranges(&path), 48985);
+            assert_eq!(sum_invalid_ids_in_ranges(&path_for("left_equal_right.txt")), 48985);
         }
 
         #[test]
         fn left_greater() {
-            let path = get_path_from_root("test_inputs/day02/left_greater_right.txt");
-            assert_eq!(sum_invalid_ids_in_ranges(&path), 4444);
+            assert_eq!(sum_invalid_ids_in_ranges(&path_for("left_greater_right.txt")), 4444);
         }
 
         #[test]
         fn left_lesser() {
-            let path = get_path_from_root("test_inputs/day02/left_less_right.txt");
-            assert_eq!(sum_invalid_ids_in_ranges(&path), 2222);
+            assert_eq!(sum_invalid_ids_in_ranges(&path_for("left_less_right.txt")), 2222);
         }
 
         #[test]
         fn no_invalid() {
-            let path = get_path_from_root("test_inputs/day02/no_invalid.txt");
-            assert_eq!(sum_invalid_ids_in_ranges(&path), 0);
+            assert_eq!(sum_invalid_ids_in_ranges(&path_for("no_invalid.txt")), 0);
         }
 
         #[test]
         fn single_invalid() {
-            let path = get_path_from_root("test_inputs/day02/single_invalid.txt");
-            assert_eq!(sum_invalid_ids_in_ranges(&path), 11);
+            assert_eq!(sum_invalid_ids_in_ranges(&path_for("single_invalid.txt")), 11);
         }
 
         #[test]
         fn many_sequences() {
-            let path = get_path_from_root("test_inputs/day02/many_sequences.txt");
-            assert_eq!(sum_invalid_ids_in_ranges(&path), 24416684186);
+            assert_eq!(sum_invalid_ids_in_ranges(&path_for("many_sequences.txt")), 24416684186);
         }
     }
 
@@ -693,44 +688,37 @@ mod tests {
 
         #[test]
         fn aoc_example() {
-            let path = get_path_from_root("test_inputs/day02/aoc_example_repeating_ids.txt");
-            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 4174379265);
+            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path_for("aoc_example_repeating_ids.txt")), 4174379265);
         }
 
         #[test]
         fn left_equal_right() {
-            let path = get_path_from_root("test_inputs/day02/left_equal_right.txt");
-            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 48985);
+            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path_for("left_equal_right.txt")), 48985);
         }
 
         #[test]
         fn left_greater() {
-            let path = get_path_from_root("test_inputs/day02/left_greater_right.txt");
-            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 4444);
+            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path_for("left_greater_right.txt")), 4444);
         }
 
         #[test]
         fn left_lesser() {
-            let path = get_path_from_root("test_inputs/day02/left_less_right.txt");
-            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 2222);
+            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path_for("left_less_right.txt")), 2222);
         }
 
         #[test]
         fn no_invalid() {
-            let path = get_path_from_root("test_inputs/day02/no_invalid.txt");
-            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 0);
+            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path_for("no_invalid.txt")), 0);
         }
 
         #[test]
         fn single_invalid() {
-            let path = get_path_from_root("test_inputs/day02/single_invalid.txt");
-            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 11);
+            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path_for("single_invalid.txt")), 11);
         }
 
         #[test]
         fn many_sequences() {
-            let path = get_path_from_root("test_inputs/day02/many_sequences.txt");
-            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path), 25426801288);
+            assert_eq!(sum_repeating_invalid_ids_in_ranges(&path_for("many_sequences.txt")), 25426801288);
         }
     }
 }
