@@ -12,6 +12,14 @@ fn separate_string_to_digits(input: &str) -> Vec<i32> {
 }
 
 fn find_largest_two_digits(digits_vector: &[i32]) -> (i32, i32) {
+    if digits_vector.len() < 2 {
+        if digits_vector.is_empty() {
+            return (0, 0);
+        }
+
+        return (0, digits_vector[0]);
+    }
+
     let mut left = digits_vector[0];
     let mut right = digits_vector[1];
 
@@ -117,10 +125,6 @@ mod tests {
             let expected = vec![1, 2, 3];
             assert_eq!(separate_string_to_digits("123"), expected);
         }
-    }
-
-    mod find_largest_two_digits {
-        use super::*;
 
         #[test]
         fn slash_before_zero_is_excluded() {
@@ -140,6 +144,35 @@ mod tests {
         #[test]
         fn unicode_characters_do_not_produce_false_positives() {
             assert_eq!(separate_string_to_digits("é"), vec![]);
+        }
+    }
+
+    mod find_largest_two_digits {
+        use super::*;
+
+        #[test]
+        fn empty_vector_returns_zeros() {
+            assert_eq!(find_largest_two_digits(&[]), (0, 0));
+        }
+
+        #[test]
+        fn single_digit_returns_itself() {
+            assert_eq!(find_largest_two_digits(&[7]), (0, 7));
+        }
+
+        #[test]
+        fn two_digits_returns_pair_unchanged() {
+            assert_eq!(find_largest_two_digits(&[4, 2]), (4, 2));
+        }
+
+        #[test]
+        fn two_digits_with_leading_zero() {
+            assert_eq!(find_largest_two_digits(&[0, 5]), (0, 5));
+        }
+
+        #[test]
+        fn two_digits_both_zero() {
+            assert_eq!(find_largest_two_digits(&[0, 0]), (0, 0));
         }
     }
 
