@@ -134,6 +134,43 @@ mod tests {
     mod calculate_two_digit_joltage {
         use super::*;
 
+        #[test]
+        fn aoc_example() {
+            assert_eq!(
+                calculate_two_digit_joltage(&path_for("aoc_example.txt")),
+                357
+            );
+        }
 
+        #[test]
+        fn empty_file() {
+            assert_eq!(calculate_two_digit_joltage(&path_for("empty_file.txt")), 0);
+        }
+
+        #[test]
+        fn exactly_two_digits() {
+            assert_eq!(
+                calculate_two_digit_joltage(&path_for("exactly_two_digits.txt")),
+                42
+            );
+        }
+
+        #[test]
+        fn descending_digits() {
+            assert_eq!(calculate_two_digit_joltage(&path_for("descending.txt")), 98);
+        }
+
+        #[test]
+        fn right_updated_independently() {
+            assert_eq!(
+                calculate_two_digit_joltage(&path_for("right_updated.txt")),
+                78
+            );
+        }
+
+        #[test]
+        fn zero_digits() {
+            assert_eq!(calculate_two_digit_joltage(&path_for("with_zeros.txt")), 0);
+        }
     }
 }
