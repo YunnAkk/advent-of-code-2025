@@ -34,10 +34,22 @@ fn find_largest_two_digits(digits_vector: &[i32]) -> (i32, i32) {
 pub fn calculate_two_digit_joltage(path: &PathBuf) -> i32 {
     let mut total_sum: i32 = 0;
 
-    let reader = utils::buffered_reader(path).unwrap();
+    let reader = match utils::buffered_reader(path) {
+        Ok(reader) => reader,
+        Err(e) => {
+            panic!("failed to open {}: {e}", path.display())
+        }
+    };
 
     for line in reader.lines() {
-        let digits_vector = separate_string_to_digits(&line.unwrap());
+        let line = match line {
+            Ok(line) => line,
+            Err(e) => {
+                eprintln!("Warning: skipping a line, read error: {e}");
+                continue;
+            }
+        };
+        let digits_vector = separate_string_to_digits(&line);
         let (left, right) = find_largest_two_digits(&digits_vector);
         total_sum += left * 10 + right;
     }
