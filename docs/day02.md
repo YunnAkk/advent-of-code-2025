@@ -21,7 +21,6 @@ if left_half > right_half {
 ```
 
 ### Case 2: Left $=$ Right
-
 The current number is an invalid ID, so we add it to the running total. The interesting part is advancing efficiently. Given $4848$, we know the next invalid ID is $4949$. A naive increment by one and check loop would require $4949 - 4848 = 101$ iterations, $100$ of which are wasted.
 
 We can do better by exploiting positional notation. Any natural number $N$ can be expressed in base $b$ as:
