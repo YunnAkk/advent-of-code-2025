@@ -78,7 +78,7 @@ This completes the solution for Part 1.
 ## Part 2
 TODO
 
-## Problem solving approach part 2
+## Problem Solving Approach Part 2
 While the bilateral partitioning used in Part 1 effectively identifies IDs that repeat exactly twice, it lacks the flexibility to generalize to sequences with arbitrary repetition frequencies. To identify invalid IDs defined by repeating sequences, we leverage the mathematical property of periodicity. A periodic ID of total length $L$ is formed by a pattern (prefix) of length $P$ that repeats $k$ times. This relationship is defined by
 
 $$L = P \cdot k$$
@@ -254,3 +254,6 @@ And finally, once a primitive pattern is confirmed, the full ID is reconstructed
 ```rust
 total_sum += pattern * repunit_multiplier;
 ```
+
+[Go to Day 2 Code](../src/days/day02.rs)  
+[Go to Day 3](day03.md)

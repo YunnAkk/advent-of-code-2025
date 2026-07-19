@@ -10,7 +10,8 @@ Advent of Code is a series of programming challenges released each December, the
 | [`test_inputs/`](./test_inputs) | Files used for testing |
 
 ## Documentation of Individual Days
-You can reach the documentation for each day by clicking on the respective name down below
+You can reach the documentation for each day by clicking on the respective name down below. To begin, just click on Day 1
 
-- [Day 01](docs/day01.md)
-- [Day 02](docs/day02.md)
+- [Day 1](docs/day01.md)
+- [Day 2](docs/day02.md)
+- [Day 3](docs/day03.md)
