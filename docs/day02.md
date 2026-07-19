@@ -196,10 +196,10 @@ If `valid_min > valid_max`, then no $P$ digit pattern yields a product in $[star
 Next we have to handle a critical challenge in this implementation which arises from the potential for representation redundancy. As established, a periodic ID of length $L$ can be decomposed into a pattern of length $P$ and a repetition factor $k$, such that $L = P \cdot k$. However, this decomposition is not necessarily unique. For instance, the ID $111111$ can be validly described by several $(P, k)$ pairs:
 
 | Pattern | $P$ (length) | $k$ (repetitions) |
-|---------|----------|--------------|
-| $1$     | $1$      | $6$          |
-| $11$    | $2$      | $3$          |
-| $111$   | $3$      | $2$          |
+|---------|--------------|-------------------|
+| $1$     | $1$          | $6$               |
+| $11$    | $2$          | $3$               |
+| $111$   | $3$          | $2$               |
 
 If the algorithm iterates through all possible pattern lengths and repetition factors without a uniqueness constraint, a single value would be aggregated into the total sum multiple times leading to an incorrect result. To ensure each periodic number is counted exactly once, we must enforce the condition that $P$ is a primitive pattern. A pattern is defined as primitive if it cannot be further decomposed into a smaller repeating sub unit. In the example above, only $P=1$ is primitive. $11$ and $111$ are periodic repetitions of the fundamental unit $1$.
 
