@@ -1,18 +1,32 @@
-# Day 2: TITLE
-## Part 1
-TODO
+# Day 2 — Gift Shop
+## Invalid ID Ranges
+The problem involves a list of ID ranges, the task is to find every invalid ID within those ranges and sum them. The input consists of comma separated ranges, each written as `first-last`, where `first` and `last` denote the inclusive bounds of that range.
 
-## Problem Solving Approach: Part 1
-My initial approach was to split the input number in half, given a number such as $9027$, this yields $90$ for the left half and $27$ for the right half and then compare the raw byte/ASCII value of the two halves. If they are identical, the number is an invalid ID, and we accumulate it into a running total. We then increment to $9028$ and repeat. While this could work, it's inefficient. It performs a comparison for every number in the range. For a range containing $10\,000$ numbers, this results in $O(n)$ comparisons where $n$ is the size of the range, here that would correspond to $O(10\,000)$.
+An ID is considered invalid if it consists of a single sequence of digits repeated exactly twice, with no leading zeroes permitted. For example, $11$, $99$, $1010$ and $1188511885$ are all invalid IDs, since each is some digit sequence written twice in succession. Numbers such as $0101$ are not IDs at all, but $101$ is a valid ID and should be ignored. Given the example below
 
-This inefficiency is particularly apparent for numbers with an odd digit count. Consider the number $10721$. Splitting it yields either a left half of $10$ and a right half of $721$ or a left half of $107$ and a right half of $21$. In neither case can the halves match, so no number with an odd digit count can ever be an invalid ID. Every comparison within such a range is wasted work, and we should skip these ranges entirely.
+- $11$-$22$ has two invalid IDs, $11$ and $22$.
+- $95$-$115$ has one invalid ID, $99$.
+- $998$-$1012$ has one invalid ID, $1010$.
+- $1188511880$-$1188511890$ has one invalid ID, $1188511885$.
+- $222220$-$222224$ has one invalid ID, $222222$.
+- $1698522$-$1698528$ contains no invalid IDs.
+- $446443$-$446449$ has one invalid ID, $446446$.
+- $38593856$-$38593862$ has one invalid ID, $38593859$.
+- The remaining ranges contain no invalid IDs.
+
+Summing all invalid IDs found in the ranges above yields $1227775554$.
+
+## Splitting Numbers to Detect Doubled Sequences
+My initial approach was to split the input number in half, given a number such as $9027$, this yields $90$ for the left half and $27$ for the right half and then compare the raw byte/ASCII value of the two halves. If they are identical, the number is an invalid ID and we accumulate it into a running total. We then increment to $9028$ and repeat. While this could work, it's inefficient. It performs a comparison for every number in the range. For a range containing $10\,000$ numbers, this results in $O(n)$ comparisons where $n$ is the size of the range, here that would correspond to $O(10\,000)$.
+
+This inefficiency is particularly apparent for numbers with an odd digit count. Consider the number $10721$. Splitting it yields either a left half of $10$ and a right half of $721$ or a left half of $107$ and a right half of $21$. In neither case can the halves match, so no number with an odd digit count can ever be an invalid ID. Every comparison within such a range is wasted work and we should skip these ranges entirely.
 
 This observation leads to the core idea. Given an input number, we first check whether its digit count is even. For example, numbers in the range $4000$ – $9999$ have four digits and can contain invalid IDs, whereas numbers in the range $10000$ – $99999$ have five digits and cannot. This motivates a simple conditional, when `(num_digits % 2) == 0` is `true`, the number lies in a range that may contain invalid IDs and we proceed with the splitting logic. in the `else` branch, we skip ahead to the next power of ten where invalid IDs can resume.
 
 Let us now examine the even length case in detail. Consider the range $4810$ – $100000$. Taking the number $4810$ and splitting it into halves gives a left half of $48$ and a right half of $10$. Holding the left half fixed three scenarios can arise: the left half is greater than the right (e.g. $4810$ where $48 > 10$), the two halves are equal (e.g. $4848$, where both halves are $48$), or the left half is less than the right half (e.g. $4870$, where $48 < 70$). Each scenario corresponds to a distinct branch in the algorithm.
 
 ### Case 1: Left $>$ Right
-Let our current number be $4810$, we compute the difference $\text{left} - \text{right} = 48 - 10 = 38$. Adding this to the current number yields $4810 + 38 = 4848$, at which point the two halves are equal and we have located an invalid ID. Implementation:
+Let our current number be $4810$, we compute the difference $\text{left} - \text{right} = 48 - 10 = 38$. Adding this to the current number yields $4810 + 38 = 4848$, at which point the two halves are equal and we have located an invalid ID.
 
 ```rust
 if left_half > right_half {
@@ -36,11 +50,11 @@ Variables:
 
 Constraints:
 - $0 \leq d_i < b$: This range ensures that every number has a unique representation. It requires that any value equal to or greater than the base must carry over to the next position $b^{i+1}$. For example, in base $10$, the value of ten must be written as $1 \cdot 10^1 + 0 \cdot 10^0$ ($10$) rather than $0 \cdot 10^1 + 10 \cdot 10^0$, which would be the case if $d_i$ were allowed to equal $b$.
-- $b \in \mathbb{Z}_{\geq 2}$: The base must be an integer greater than or equal to $2$. A base of $0$ or $1$ fails to provide the necessary non zero digits ($d_i$) to represent positive quantities through powers of the base. If $b=1$, then $1^i = 1$ for all $i$, and the only valid digit satisfying $d_i < 1$ is $0$, making it impossible to represent any number other than zero.
+- $b \in \mathbb{Z}_{\geq 2}$: The base must be an integer greater than or equal to $2$. A base of $0$ or $1$ fails to provide the necessary non zero digits ($d_i$) to represent positive quantities through powers of the base. If $b=1$, then $1^i = 1$ for all $i$ and the only valid digit satisfying $d_i < 1$ is $0$, making it impossible to represent any number other than zero.
 
 To illustrate, representing $4848$ in base $10$ with index $n = 3$ gives the expansion $(4 \cdot 10^3) + (8 \cdot 10^2) + (4 \cdot 10^1) + (8 \cdot 10^0) = 4000 + 800 + 40 + 8 = 4848$, demonstrating how each digit $d_i$ maps to its corresponding power of the base to reconstruct the total value $N$.
 
-This structure is exploited to skip directly from $4848$ to the next invalid id of $4949$, without checking every value in between. Consider only the left half of the number, $48$, which corresponds to $4800$ when the right half is zeroed out. Incrementing the left half by one amounts to adding $10^{n/2} \quad \text{where } n = \text{length of the full number}$, to the full number. With $n = 4$ digits, this is $10^{4/2} = 10^2 = 100$. Adding $100$ to $4848$ yields $4948$. A further addition of $1$ forces the right half to match the incremented left half, producing $4949$. In a single arithmetic step, we bypass every valid ID in between. Implementation:
+This structure is exploited to skip directly from $4848$ to the next invalid id of $4949$, without checking every value in between. Consider only the left half of the number, $48$, which corresponds to $4800$ when the right half is zeroed out. Incrementing the left half by one amounts to adding $10^{n/2} \quad \text{where } n = \text{length of the full number}$, to the full number. With $n = 4$ digits, this is $10^{4/2} = 10^2 = 100$. Adding $100$ to $4848$ yields $4948$. A further addition of $1$ forces the right half to match the incremented left half, producing $4949$. In a single arithmetic step, we bypass every valid ID in between.
 
 ```rust
 else if left_half == right_half {
@@ -52,7 +66,7 @@ else if left_half == right_half {
 ### Case 3: Left $<$ Right
 Consider $4870$, where the left half is $48$ and the right half is $70$. Since $48 < 70$, no invalid ID exists with a left half of $48$. The right half has already surpassed the point where equality was possible. The next invalid ID must therefore have a left half of $49$, computed as $`\text{left\_half} + 1 = 48 + 1 = 49`$.
 
-To reach this next range, the right half must increment until it reaches $b^{n/2}$, the half-base of $100$. This is precisely the carry threshold established by the positional notation constraint. A half consisting of $n/2$ digits rolls over to $0$ and increments its neighbor when it reaches $b^{n/2}$. The remaining distance before this carry occurs is the right half's deficit from the base $`\text{right\_deficit} = \text{half\_base} - \text{right\_half} = 100 - 70 = 30`$. Adding this deficit to the current number triggers the carry $4870 + 30 = 4900$, where the left half is now $49$. The final step is to place the new left half into the right half position, which is a simple addition $4900 + 49 = 4949$. This yields the next invalid ID. Implementation:
+To reach this next range, the right half must increment until it reaches $b^{n/2}$, the half-base of $100$. This is precisely the carry threshold established by the positional notation constraint. A half consisting of $n/2$ digits rolls over to $0$ and increments its neighbor when it reaches $b^{n/2}$. The remaining distance before this carry occurs is the right half's deficit from the base $`\text{right\_deficit} = \text{half\_base} - \text{right\_half} = 100 - 70 = 30`$. Adding this deficit to the current number triggers the carry $4870 + 30 = 4900$, where the left half is now $49$. The final step is to place the new left half into the right half position, which is a simple addition $4900 + 49 = 4949$. This yields the next invalid ID.
 
 ```rust
 else if left_half < right_half {
@@ -63,7 +77,7 @@ else if left_half < right_half {
 ```
 
 ### Handling Odd-Length Ranges
-Observe that in both the $\text{left} > \text{right}$ and $\text{left} < \text{right}$ cases, the number is adjusted to land on an invalid ID. Only in the equality branch is it added to the sum and then advanced, this is done to avoid summing the same ID twice. This loop continues until the number reaches an odd digit count. For example, $10000$ which has five digits. Since no odd length number can be an invalid ID, we skip directly to the next even length range. The number $10000$ has a digit length of $5$, the next range of invalid IDs begins at $100000$, which is $10^5$. Expressed in positional notation, $100000 = 1 \cdot 10^5 + 0 \cdot 10^4 + 0 \cdot 10^3 + 0 \cdot 10^2 + 0 \cdot 10^1 + 0 \cdot 10^0$ and the exponent of the leading term matches the current digit length. More generally, if the current digit length is $k$ (odd), we assign $10^k$ to the current number, jumping to the start of the next even-length range. Implementation:
+Observe that in both the $\text{left} > \text{right}$ and $\text{left} < \text{right}$ cases, the number is adjusted to land on an invalid ID. Only in the equality branch is it added to the sum and then advanced, this is done to avoid summing the same ID twice. This loop continues until the number reaches an odd digit count. For example, $10000$ which has five digits. Since no odd length number can be an invalid ID, we skip directly to the next even length range. The number $10000$ has a digit length of $5$, the next range of invalid IDs begins at $100000$, which is $10^5$. Expressed in positional notation, $100000 = 1 \cdot 10^5 + 0 \cdot 10^4 + 0 \cdot 10^3 + 0 \cdot 10^2 + 0 \cdot 10^1 + 0 \cdot 10^0$ and the exponent of the leading term matches the current digit length. More generally, if the current digit length is $k$ (odd), we assign $10^k$ to the current number, jumping to the start of the next even-length range.
 
 ```rust
 else {
@@ -72,12 +86,26 @@ else {
 }
 ```
 
-This completes the solution for Part 1.
+## Repeating Sequences of Any Length
+Building on the previous part, the definition of an invalid ID is broadened. Rather than requiring a digit sequence to repeat exactly twice, an ID is now considered invalid if it consists of some digit sequence repeated two or more times in succession. For example, $12341234$ is $1234$ repeated twice, $123123123$ is $123$ repeated three times, $1212121212$ is $12$ repeated five times and $1111111$ is $1$ repeated seven times.
 
-## Part 2
-TODO
+As before, no ID has leading zeroes and the same list of ranges from Part 1 is used. Applying this expanded definition to the example ranges:
 
-## Problem Solving Approach Part 2
+- $11$-$22$ still has two invalid IDs, $11$ and $22$.
+- $95$-$115$ now has two invalid IDs, $99$ and $111$.
+- $998$-$1012$ now has two invalid IDs, $999$ and $1010$.
+- $1188511880$-$1188511890$ still has one invalid ID, $1188511885$.
+- $222220$-$222224$ still has one invalid ID, $222222$.
+- $1698522$-$1698528$ still contains no invalid IDs.
+- $446443$-$446449$ still has one invalid ID, $446446$.
+- $38593856$-$38593862$ still has one invalid ID, $38593859$.
+- $565653$-$565659$ now has one invalid ID, $565656$.
+- $824824821$-$824824827$ now has one invalid ID, $824824824$.
+- $2121212118$-$2121212124$ now has one invalid ID, $2121212121$.
+
+Summing all invalid IDs found in the ranges above under this new rule yields $4174379265$. The task is to apply this expanded definition to the puzzle input and report the resulting sum.
+
+## Generalizing to Periodic Patterns
 While the bilateral partitioning used in Part 1 effectively identifies IDs that repeat exactly twice, it lacks the flexibility to generalize to sequences with arbitrary repetition frequencies. To identify invalid IDs defined by repeating sequences, we leverage the mathematical property of periodicity. A periodic ID of total length $L$ is formed by a pattern (prefix) of length $P$ that repeats $k$ times. This relationship is defined by
 
 $$L = P \cdot k$$
@@ -94,7 +122,7 @@ $$P_{\max} = \frac{L}{k_{\min}} = \frac{L}{2}$$
 A further constraint is that $P$ must divide $L$ exactly without remainder. The candidate pattern lengths for a given $L$ are therefore the divisors of $L$ in the range $1 \le P \le L/2$.
 
 ### The Repunit Multiplier and Geometric Series
-Any number in positional notation expands as a sum of its digits weighted by powers of the base. For a periodic number, this expansion factors neatly. Consider $424242$ with pattern $42$ and $P = 2$:
+Any number in positional notation expands as a sum of its digits weighted by powers of the base. For a periodic number, this expansion factors neatly. Consider $424242$ with pattern $42$ and $P = 2$
 
 $$424242 = 42 \cdot 10^4 + 42 \cdot 10^2 + 42 \cdot 10^0 = 42 \cdot (10^4 + 10^2 + 1) = 42 \cdot 10101$$
 
@@ -120,7 +148,7 @@ $$S(1 - r) = a(1 - r^{n})$$
 
 $$S = a \frac{1 - r^{n}}{1 - r} = a\frac{r^{n} - 1}{r - 1}$$
 
-where the last equality multiplies numerator and denominator by $-1$. Substituting the starting value $a = 1$, the common ratio $r = 10^P$, and the number of terms $n = k = L/P$
+where the last equality multiplies numerator and denominator by $-1$. Substituting the starting value $a = 1$, the common ratio $r = 10^P$ and the number of terms $n = k = L/P$
 
 $$M = \frac{(10^P)^{L/P} - 1}{10^P - 1} = \frac{10^L - 1}{10^P - 1}$$
 
@@ -130,7 +158,7 @@ Example: For $424242$ with $P = 2$, $L = 6$
 
 $$M = \frac{10^6 - 1}{10^2 - 1} = \frac{999999}{99} = 10101 \qquad 42 \cdot 10101 = 424242$$
 
-### Code Implementation
+### Iterating Over Lengths and Pattern Sizes
 The implementation loops over total lengths $L$ from start_len to end_len and for each $L$, over pattern lengths $P$ from $1$ to $L/2$
 
 ```rust
@@ -203,7 +231,7 @@ Next we have to handle a critical challenge in this implementation which arises 
 If the algorithm iterates through all possible pattern lengths and repetition factors without a uniqueness constraint, a single value would be aggregated into the total sum multiple times leading to an incorrect result. To ensure each periodic number is counted exactly once, we must enforce the condition that $P$ is a primitive pattern. A pattern is defined as primitive if it cannot be further decomposed into a smaller repeating sub unit. In the example above, only $P=1$ is primitive. $11$ and $111$ are periodic repetitions of the fundamental unit $1$.
 
 #### The is_primitive_pattern Verification
-Before adding a value to the summation, the function `is_primitive_pattern` is invoked to validate the primitivity of the current pattern. The logic proceeds in two steps:
+Before adding a value to the summation, the function `is_primitive_pattern` is invoked to validate the primitivity of the current pattern. The logic proceeds in two steps
 
 **1. Candidate Period Identification**: The function iterates through all possible sub periods $T$ where $1 \leq T < P$. A sub period $T$ is only a candidate for periodicity if it is a proper divisor of $P$. If $T$ does not divide $P$ evenly, it is mathematically impossible for the pattern to be a perfect repetition of a block of length $T$.
 
@@ -231,11 +259,11 @@ for sub_period in 1..pattern_len {
 return true;  // no sub-period matched -> pattern is primitive
 ```
 
-In this loop, `digits[i % sub_period]` maps every index $i$ back to its relative position within the first $T$ digits, representing the aforementioned first potential block. If this condition holds for all $i$, the pattern is proven to be periodic (non primitive), and the function returns `false`.
+In this loop, `digits[i % sub_period]` maps every index $i$ back to its relative position within the first $T$ digits, representing the aforementioned first potential block. If this condition holds for all $i$, the pattern is proven to be periodic (non primitive) and the function returns `false`.
 
 **Example**: pattern $= 123123$, $P = 6$
 
-When evaluating the pattern $123123$, the function tests the following:
+When evaluating the pattern $123123$, the function tests the following
 
 - At $T = 1$: The algorithm compares $\text{digits}[1] = 2$ against $\text{digits}[1 \bmod 1] = \text{digits}[0] = 1$. Since $2 \neq 1$, the pattern is not a repetition of length 1.
 - At $T = 2$: The algorithm compares $\text{digits}[2] = 3$ against $\text{digits}[2 \bmod 2] = \text{digits}[0] = 1$. Since $3 \neq 1$, it is not a repetition of length 2.
@@ -244,7 +272,7 @@ When evaluating the pattern $123123$, the function tests the following:
     - $i=4: \text{digits}[4] = 2 = \text{digits}[1] = 2$
     - $i=5: \text{digits}[5] = 3 = \text{digits}[2] = 3$
 
-All indices satisfy the condition. The pattern is identified as periodic with a period of 3, and is thus rejected.
+All indices satisfy the condition. The pattern is identified as periodic with a period of 3 and is thus rejected.
 
 By filtering for primitivity, the algorithm ensures that $111111$ is only processed when $P = 1$ and $k = 6$. Subsequent attempts to process it via patterns $11$ or $111$ (which would correspond to $P = 2$ and $P = 3$) are caught by `is_primitive_pattern` and excluded, maintaining the integrity of the summation.
 
